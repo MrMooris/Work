@@ -78,12 +78,11 @@
   .today-btn.on{background:var(--sel,var(--amber));color:#1a1304;border-color:transparent;font-weight:600}
 
   /* ---- Selection bar ---- */
-  .selbar{display:none;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+  .selbar{display:none;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
   .selbar.open{display:flex}
-  .selcount{font-size:13px;color:var(--text-dim)} .selcount b{font-family:'Space Grotesk',sans-serif;color:var(--text);font-size:15px;font-variant-numeric:tabular-nums}
-  .selacts{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-left:auto}
-  .sellbl{font-size:12px;color:var(--text-faint);margin-right:1px}
-  .selbtn{height:34px;padding:0 13px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--text);font-size:13px;font-weight:500;transition:.15s}
+  .selcount{font-size:13px;color:var(--text-dim);white-space:nowrap} .selcount b{font-family:'Space Grotesk',sans-serif;color:var(--text);font-size:15px;font-variant-numeric:tabular-nums}
+  .sellbl{font-size:12px;color:var(--text-faint);margin-left:4px}
+  .selbtn{height:34px;padding:0 13px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--text);font-size:13px;font-weight:500;transition:.15s;white-space:nowrap;flex:0 0 auto;min-width:max-content;width:auto}
   .selbtn:hover{background:var(--surface-2);border-color:var(--line-soft)}
   .selbtn.del{color:#ff6b6f;border-color:rgba(229,72,77,.3)}
   .selbtn.del:hover{background:rgba(229,72,77,.12)}
@@ -181,10 +180,6 @@
   .rin.du i{color:#e8954a} .rin.ej i{color:var(--teal)}
   .pay-box input{width:70px;padding:7px 9px;font-size:13.5px;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;color:var(--text)}
   .pay-box input:focus{outline:none;border-color:var(--amber-line)}
-  .pay-calc{font-size:12.5px;color:var(--text-dim);border-top:1px dashed var(--line);padding-top:10px;font-variant-numeric:tabular-nums;line-height:1.55}
-  .pay-calc b{font-family:'Space Grotesk',sans-serif;font-weight:600}
-  .pay-calc .de{color:var(--amber)} .pay-calc .du{color:#e8954a} .pay-calc .ej{color:var(--teal)}
-  .pay-calc .earn{color:var(--text)}
   .pay-reset{margin-left:auto;height:30px;padding:0 11px;border-radius:7px;background:var(--bg-2);border:1px solid var(--line);color:var(--text-dim);font-size:12px;cursor:pointer;transition:.15s;white-space:nowrap}
   .pay-reset:hover{color:var(--text);border-color:var(--line-soft)}
   .earn.p1{color:var(--amber)} .earn.p2{color:var(--teal)}
@@ -207,6 +202,7 @@
     .modal{max-width:none;border-radius:18px 18px 0 0;max-height:90vh}
     .scrim{padding:0;align-items:flex-end}
     .footer{flex-direction:column;align-items:stretch}
+    .selbar{gap:8px}
   }
 </style>
 </head>
@@ -228,6 +224,7 @@
     <div class="totals">
       <div class="stat"><div class="label">Műszak / hó</div><div class="value" id="stat-count">0</div></div>
       <div class="stat"><div class="label">Óra / hó</div><div class="value accent" id="stat-hours">0<small>ó</small></div></div>
+      <div class="stat"><div class="label">Kereset / hó</div><div class="value" id="stat-earn">–</div></div>
     </div>
   </header>
 
@@ -242,15 +239,13 @@
   </div>
 
   <div class="selbar" id="selbar">
+    <button class="selbtn done" id="sel-done">Kész</button>
     <span class="selcount"><b id="sel-count">0</b> nap kijelölve</span>
-    <div class="selacts">
-      <span class="sellbl">Mindre:</span>
-      <button class="selbtn" data-s="06:00" data-e="14:00">Délelőtt</button>
-      <button class="selbtn" data-s="14:00" data-e="22:00">Délután</button>
-      <button class="selbtn" data-s="22:00" data-e="06:00">Éjszaka</button>
-      <button class="selbtn del" id="sel-del">Műszakok törlése</button>
-      <button class="selbtn done" id="sel-done">Kész</button>
-    </div>
+    <span class="sellbl">Mindre:</span>
+    <button class="selbtn" data-s="06:00" data-e="14:00">Délelőtt</button>
+    <button class="selbtn" data-s="14:00" data-e="22:00">Délután</button>
+    <button class="selbtn" data-s="22:00" data-e="06:00">Éjszaka</button>
+    <button class="selbtn del" id="sel-del">Törlés</button>
   </div>
 
   <div class="cal">
@@ -270,7 +265,6 @@
         <span class="rin ej"><i>Éjszaka</i><input type="number" id="pay-ej" min="0" step="5"> %</span>
         <button class="pay-reset" id="pay-reset" title="Alaphelyzet: 2450 Ft, +30%, +50%">↺ Alaphelyzet</button>
       </div>
-      <div class="pay-calc" id="pay-calc"></div>
     </div>
     <div class="sync" id="sync"><span class="led"></span><span id="sync-text">Helyi mentés</span></div>
   </div>
@@ -516,12 +510,8 @@ function renderTotals(){
   });
 }
 function updatePayCalc(monthEarn){
-  const pay=state.profiles[active].pay||{};
-  const b=pay.base||0, du=b*(1+(pay.duPct||0)/100), ej=b*(1+(pay.ejPct||0)/100);
   const f=n=>Math.round(n).toLocaleString('hu-HU');
-  let html=`Óradíj &nbsp;·&nbsp; Délelőtt <b class="de">${f(b)}</b> · Délután <b class="du">${f(du)}</b> · Éjszaka <b class="ej">${f(ej)}</b> Ft`;
-  if(monthEarn>0) html+=` &nbsp;·&nbsp; e havi kereset: <b class="earn">≈ ${f(monthEarn)} Ft</b>`;
-  document.getElementById('pay-calc').innerHTML=html;
+  document.getElementById('stat-earn').innerHTML = monthEarn>0 ? `${f(monthEarn)}<small> Ft</small>` : '–';
 }
 
 /* ---------- modal ---------- */
