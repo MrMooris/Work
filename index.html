@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Munkanaptár · 2 fő</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12141d;--bg-2:#161925;--surface:#1c2030;--surface-2:#232838;
+    --line:#2c3242;--line-soft:#242a38;
+    --text:#e9ebf2;--text-dim:#8b91a6;--text-faint:#5a6076;
+    --amber:#f5a623;--amber-soft:rgba(245,166,35,.14);--amber-line:rgba(245,166,35,.42);
+    --teal:#3ec9c0;--teal-soft:rgba(62,201,192,.15);--teal-line:rgba(62,201,192,.42);
+    --green:#43c97a;
+    --radius:14px;--radius-sm:9px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(245,166,35,.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(62,201,192,.05), transparent 55%),
+      var(--bg);
+    color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100%;
+    -webkit-font-smoothing:antialiased;line-height:1.4;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:22px 18px 60px}
+
+  /* ---- Profile tabs ---- */
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{
+    flex:1;display:flex;align-items:center;gap:9px;justify-content:center;
+    background:var(--surface);border:1px solid var(--line-soft);
+    border-radius:var(--radius);padding:11px 14px;cursor:pointer;transition:.15s;
+    min-width:0;
+  }
+  .tab:hover{border-color:var(--line);background:var(--surface-2)}
+  .tab .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .tab[data-p="p1"] .dot{background:var(--amber)}
+  .tab[data-p="p2"] .dot{background:var(--teal)}
+  .tab .nm{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tab .hr{font-size:12px;color:var(--text-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tab.active[data-p="p1"]{border-color:var(--amber-line);background:var(--amber-soft)}
+  .tab.active[data-p="p2"]{border-color:var(--teal-line);background:var(--teal-soft)}
+  .tab .nm-input{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
+    background:var(--bg);border:1px solid var(--line);border-radius:7px;
+    color:var(--text);padding:3px 7px;width:120px;text-align:center;
+  }
+  .tab .nm-input:focus{outline:none;border-color:var(--amber-line)}
+
+  /* ---- Header ---- */
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+  .title{display:flex;flex-direction:column;gap:2px}
+  .title .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);font-weight:600}
+  .title h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(21px,4vw,28px);letter-spacing:-.01em}
+  .title h1 .who{color:var(--amber)}
+  .totals{display:flex;gap:10px;flex-wrap:wrap}
+  .stat{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:11px 16px;min-width:104px}
+  .stat .label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:3px}
+  .stat .value{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat .value.accent{color:var(--amber)}
+  .stat .value small{font-size:13px;font-weight:500;color:var(--text-dim);margin-left:2px}
+
+  /* ---- Month nav ---- */
+  .navbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .month-label{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;letter-spacing:-.01em;min-width:150px}
+  .month-label .yr{color:var(--text-dim);font-weight:500;margin-left:6px}
+  .navbtns{display:flex;gap:6px;margin-left:auto}
+  button{font-family:inherit;cursor:pointer;color:inherit;border:none;background:none}
+  .icon-btn{width:38px;height:38px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-soft);color:var(--text-dim);font-size:16px;display:grid;place-items:center;transition:.15s}
+  .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+  .today-btn{height:38px;padding:0 16px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-soft);color:var(--text);font-weight:500;font-size:13.5px;transition:.15s}
+  .today-btn:hover{background:var(--surface-2);border-color:var(--line)}
+
+  /* ---- Calendar ---- */
+  .cal{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden}
+  .weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line-soft)}
+  .weekdays div{text-align:center;padding:11px 4px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
+  .weekdays div.we{color:var(--amber);opacity:.6}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr)}
+  .cell{min-height:106px;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);padding:7px 7px 8px;position:relative;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;gap:5px}
+  .cell:nth-child(7n){border-right:none}
+  .cell:hover{background:var(--surface)}
+  .cell.out{cursor:default;opacity:.36}
+  .cell.out:hover{background:transparent}
+  .daynum{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--text-dim);width:26px;height:26px;display:grid;place-items:center;border-radius:7px}
+  .cell.we .daynum{color:var(--amber);opacity:.75}
+  .cell.today .daynum{background:var(--text);color:var(--bg);font-weight:700;opacity:1}
+  .shifts{display:flex;flex-direction:column;gap:4px;overflow:hidden}
+  .chip{border-radius:6px;padding:3px 7px;font-size:11px;line-height:1.25;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip.p1{background:var(--amber-soft);border:1px solid var(--amber-line);color:var(--amber)}
+  .chip.p2{background:var(--teal-soft);border:1px solid var(--teal-line);color:var(--teal)}
+  .chip .pl{color:var(--text);opacity:.85;font-weight:400}
+  .chip.mate{opacity:.5;padding:2px 6px;font-size:10px;border-style:dashed}
+  .chip.mate .pl{display:none}
+  .more{font-size:10.5px;color:var(--text-faint);padding-left:2px}
+  .add-hint{position:absolute;right:7px;top:7px;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;color:var(--text-faint);font-size:15px;opacity:0;transition:.12s}
+  .cell:not(.out):hover .add-hint{opacity:1}
+
+  /* ---- Modal ---- */
+  .scrim{position:fixed;inset:0;background:rgba(8,9,14,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+  .scrim.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:18px;width:100%;max-width:430px;max-height:86vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .modal-head{padding:20px 22px 14px;border-bottom:1px solid var(--line-soft);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--surface);z-index:2}
+  .modal-head .dow{font-size:12px;font-weight:600;letter-spacing:.04em;margin-bottom:2px}
+  .modal-head .dow.p1{color:var(--amber)} .modal-head .dow.p2{color:var(--teal)}
+  .modal-head h2{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:600;letter-spacing:-.01em}
+  .modal-head .for{font-size:12px;color:var(--text-dim);margin-top:3px}
+  .close-x{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--text-dim);font-size:18px;display:grid;place-items:center;flex:none;transition:.15s}
+  .close-x:hover{color:var(--text);background:var(--line)}
+  .modal-body{padding:16px 22px 22px}
+  .shift-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .shift-row{display:flex;align-items:center;gap:12px;background:var(--bg-2);border:1px solid var(--line-soft);border-radius:10px;padding:10px 12px}
+  .shift-row .time{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+  .shift-row .meta{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+  .shift-row .meta .pl{font-size:12.5px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .shift-row .dur{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+  .dur.p1{color:var(--amber)} .dur.p2{color:var(--teal)}
+  .del{width:30px;height:30px;border-radius:8px;color:var(--text-faint);font-size:15px;display:grid;place-items:center;flex:none;transition:.15s}
+  .del:hover{color:#ff6b6f;background:rgba(229,72,77,.12)}
+  .empty{font-size:13px;color:var(--text-faint);text-align:center;padding:14px 0 16px}
+  .mate-note{font-size:12px;color:var(--text-faint);background:var(--bg-2);border:1px dashed var(--line);border-radius:9px;padding:8px 11px;margin-bottom:14px}
+  .mate-note b{color:var(--teal);font-weight:600} .mate-note.p1 b{color:var(--amber)}
+  .form{border-top:1px dashed var(--line);padding-top:16px}
+  .form-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:11px}
+  .presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}
+  .preset{background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:9px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;transition:.15s}
+  .preset span{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600}
+  .preset small{font-size:10.5px;color:var(--text-faint);font-variant-numeric:tabular-nums}
+  .preset:hover{background:var(--surface-2);border-color:var(--line-soft)}
+  #presets.p1 .preset.sel{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber)}
+  #presets.p1 .preset.sel small{color:var(--amber);opacity:.8}
+  #presets.p2 .preset.sel{background:var(--teal-soft);border-color:var(--teal-line);color:var(--teal)}
+  #presets.p2 .preset.sel small{color:var(--teal);opacity:.8}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .field label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:5px;font-weight:500}
+  .field.full{grid-column:1/-1}
+  input[type=time],input[type=text],input[type=number]{width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--text);font-family:inherit;font-size:14px;transition:.15s}
+  input::placeholder{color:var(--text-faint)}
+  input:focus{outline:none;border-color:var(--amber-line);background:var(--surface-2)}
+  input[type=time]{font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums}
+  ::-webkit-calendar-picker-indicator{filter:invert(.7)}
+  .add-btn{width:100%;margin-top:4px;height:42px;border-radius:10px;font-weight:600;font-size:14px;transition:.15s;color:#1a1304}
+  .add-btn.p1{background:var(--amber)} .add-btn.p1:hover{background:#ffb43a}
+  .add-btn.p2{background:var(--teal);color:#06201e} .add-btn.p2:hover{background:#54ddd4}
+  .add-btn:active{transform:translateY(1px)}
+
+  /* ---- Footer ---- */
+  .footer{margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .pay-box{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:12px 15px;display:flex;flex-direction:column;gap:10px;flex:1;min-width:268px}
+  .pay-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .pay-row .rl{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--text-dim);min-width:84px}
+  .rin{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-faint)}
+  .rin i{font-style:normal;font-size:11.5px;font-weight:700}
+  .rin.du i{color:#e8954a} .rin.ej i{color:var(--teal)}
+  .pay-box input{width:70px;padding:7px 9px;font-size:13.5px;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;color:var(--text)}
+  .pay-box input:focus{outline:none;border-color:var(--amber-line)}
+  .pay-calc{font-size:12.5px;color:var(--text-dim);border-top:1px dashed var(--line);padding-top:10px;font-variant-numeric:tabular-nums;line-height:1.55}
+  .pay-calc b{font-family:'Space Grotesk',sans-serif;font-weight:600}
+  .pay-calc .de{color:var(--amber)} .pay-calc .du{color:#e8954a} .pay-calc .ej{color:var(--teal)}
+  .pay-calc .earn{color:var(--text)}
+  .earn.p1{color:var(--amber)} .earn.p2{color:var(--teal)}
+  .sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-faint)}
+  .sync .led{width:8px;height:8px;border-radius:50%;background:var(--text-faint)}
+  .sync.on .led{background:var(--green);box-shadow:0 0 8px rgba(67,201,122,.6)}
+  .sync.on{color:var(--text-dim)}
+  .loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:99;color:var(--text-dim);font-size:14px}
+
+  @media(max-width:560px){
+    .wrap{padding:16px 12px 50px}
+    .cell{min-height:80px;padding:5px 4px 6px}
+    .chip{font-size:10px;padding:2px 5px}
+    .chip .pl{display:none}
+    .daynum{font-size:13px;width:23px;height:23px}
+    .weekdays div{font-size:10px;padding:9px 2px}
+    .fields{grid-template-columns:1fr}
+    .stat{min-width:0;flex:1;padding:9px 12px}.stat .value{font-size:19px}
+    .tab{padding:10px}.tab .hr{display:none}
+    .modal{max-width:none;border-radius:18px 18px 0 0;max-height:90vh}
+    .scrim{padding:0;align-items:flex-end}
+    .footer{flex-direction:column;align-items:stretch}
+  }
+</style>
+</head>
+<body>
+<div class="loading" id="loading">Beosztás betöltése…</div>
+
+<div class="wrap" id="app" style="display:none">
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-p="p1"><span class="dot"></span><span class="nm" id="nm-p1">1. fő</span><span class="hr" id="hr-p1"></span></div>
+    <div class="tab" data-p="p2"><span class="dot"></span><span class="nm" id="nm-p2">2. fő</span><span class="hr" id="hr-p2"></span></div>
+  </div>
+
+  <header>
+    <div class="title">
+      <span class="eyebrow">Beosztás</span>
+      <h1>Munkanaptár · <span class="who" id="who">1. fő</span></h1>
+    </div>
+    <div class="totals">
+      <div class="stat"><div class="label">Műszak / hó</div><div class="value" id="stat-count">0</div></div>
+      <div class="stat"><div class="label">Óra / hó</div><div class="value accent" id="stat-hours">0<small>ó</small></div></div>
+    </div>
+  </header>
+
+  <div class="navbar">
+    <div class="month-label" id="month-label">—</div>
+    <div class="navbtns">
+      <button class="today-btn" id="today-btn">Ma</button>
+      <button class="icon-btn" id="prev" aria-label="Előző hónap">‹</button>
+      <button class="icon-btn" id="next" aria-label="Következő hónap">›</button>
+    </div>
+  </div>
+
+  <div class="cal">
+    <div class="weekdays" id="weekdays"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="footer">
+    <div class="pay-box">
+      <div class="pay-row">
+        <span class="rl">Alapbér</span>
+        <span class="rin"><input type="number" id="pay-base" min="0" step="50"> Ft / óra</span>
+      </div>
+      <div class="pay-row">
+        <span class="rl">Műszakpótlék</span>
+        <span class="rin du"><i>Délután</i><input type="number" id="pay-du" min="0" step="5"> %</span>
+        <span class="rin ej"><i>Éjszaka</i><input type="number" id="pay-ej" min="0" step="5"> %</span>
+      </div>
+      <div class="pay-calc" id="pay-calc"></div>
+    </div>
+    <div class="sync" id="sync"><span class="led"></span><span id="sync-text">Helyi mentés</span></div>
+  </div>
+</div>
+
+<!-- Day modal -->
+<div class="scrim" id="scrim">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <div class="dow" id="m-dow"></div>
+        <h2 id="m-date"></h2>
+        <div class="for" id="m-for"></div>
+      </div>
+      <button class="close-x" id="m-close" aria-label="Bezárás">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="m-mate"></div>
+      <div class="shift-list" id="m-list"></div>
+      <div class="form">
+        <div class="form-title">Új műszak</div>
+        <div class="presets" id="presets">
+          <button class="preset" data-s="06:00" data-e="14:00"><span>Délelőtt</span><small>06–14</small></button>
+          <button class="preset" data-s="14:00" data-e="22:00"><span>Délután</span><small>14–22</small></button>
+          <button class="preset" data-s="22:00" data-e="06:00"><span>Éjszaka</span><small>22–06</small></button>
+        </div>
+        <div class="fields">
+          <div class="field"><label for="f-start">Kezdés</label><input type="time" id="f-start" value="08:00"></div>
+          <div class="field"><label for="f-end">Befejezés</label><input type="time" id="f-end" value="16:00"></div>
+          <div class="field full"><label for="f-place">Hely / megjegyzés (nem kötelező)</label><input type="text" id="f-place" placeholder="pl. Spar – polcfeltöltés" maxlength="60"></div>
+        </div>
+        <button class="add-btn p1" id="f-add">Hozzáadás</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   FIREBASE BEÁLLÍTÁS
+   Töltsd ki a saját Firebase projekted adataival (Realtime
+   Database). Ha üresen hagyod, az app helyi mentésre vált,
+   hogy itt is működjön. A 2 fő külön mentődik:
+   munkanaptar/shifts/p1  és  munkanaptar/shifts/p2
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",     // pl. https://PROJEKT.europe-west1.firebasedatabase.app
+  projectId: "",
+  appId: ""
+};
+const ROOT = "munkanaptar";   // ág a Realtime Database-ben
+
+const HU_MONTHS=['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+const HU_DOW=['Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat','Vasárnap'];
+const HU_DOW_SHORT=['H','K','Sze','Cs','P','Szo','V'];
+const LOCAL_KEY='moori-munkanaptar-2fo-v1';
+
+let state={
+  profiles:{ p1:{name:'1. fő',rates:null}, p2:{name:'2. fő',rates:null} },
+  shifts:{ p1:{}, p2:{} }   // { 'YYYY-MM-DD':[{s,e,p}] }
+};
+let active='p1';
+let view=new Date(); view.setDate(1);
+let openDateKey=null;
+let useFirebase=false, db=null, suppressWrite=false;
+
+/* ---------- helpers ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const keyOf=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+const other=p=>p==='p1'?'p2':'p1';
+function minutes(s,e){const[a,b]=s.split(':').map(Number),[c,d]=e.split(':').map(Number);let m=(c*60+d)-(a*60+b);if(m<=0)m+=1440;return m;}
+function fmtDur(m){const h=Math.floor(m/60),x=m%60;return x?`${h}ó ${x}p`:`${h}ó`;}
+function fmtH(m){const h=m/60;return Number.isInteger(h)?String(h):h.toFixed(1).replace('.',',');}
+function shiftsFor(p,key){return (state.shifts[p]||{})[key]||[];}
+const DEFAULT_PAY={base:2450,duPct:30,ejPct:50};
+function normalizePay(){
+  ['p1','p2'].forEach(p=>{
+    const pr=state.profiles[p];
+    if(!pr.pay){
+      if(pr.rates&&typeof pr.rates.de==='number'){            // korábbi verzió migrálása
+        const b=pr.rates.de||0;
+        pr.pay={base:b, duPct:b?Math.round((pr.rates.du/b-1)*100):30, ejPct:b?Math.round((pr.rates.ej/b-1)*100):50};
+      }else if(typeof pr.rate==='number'){
+        pr.pay={base:pr.rate,duPct:0,ejPct:0};
+      }else{
+        pr.pay={...DEFAULT_PAY};
+      }
+    }
+    delete pr.rates; delete pr.rate;
+  });
+}
+// műszak besorolása + tényleges óradíj (alapbér + pótlék) a kezdési idő alapján
+function rateForShift(pay,start){
+  if(!pay) return 0;
+  const b=pay.base||0,h=parseInt(start.split(':')[0],10);
+  if(h>=22||h<6) return b*(1+(pay.ejPct||0)/100);   // éjszaka 22–06
+  if(h>=14)      return b*(1+(pay.duPct||0)/100);   // délután 14–22
+  return b;                                          // délelőtt 06–14
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ---------- persistence ---------- */
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load fail'));document.head.appendChild(s);});}
+
+async function initStore(){
+  const cfgOk=FIREBASE_CONFIG.apiKey&&FIREBASE_CONFIG.databaseURL;
+  if(cfgOk){
+    try{
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db=firebase.database();
+      useFirebase=true;
+      // valós idejű figyelő – más eszközről jövő változások
+      db.ref(ROOT).on('value',snap=>{
+        const v=snap.val()||{};
+        suppressWrite=true;
+        state.profiles.p1={name:(v.profiles?.p1?.name)||'1. fő',pay:(v.profiles?.p1?.pay)||null};
+        state.profiles.p2={name:(v.profiles?.p2?.name)||'2. fő',pay:(v.profiles?.p2?.pay)||null};
+        normalizePay();
+        state.shifts.p1=(v.shifts?.p1)||{};
+        state.shifts.p2=(v.shifts?.p2)||{};
+        suppressWrite=false;
+        refreshProfileUI(); render();
+      });
+      return;
+    }catch(e){ console.warn('Firebase nem elérhető, helyi mentés lesz.',e); useFirebase=false; }
+  }
+  // helyi fallback
+  try{
+    const r=await window.storage.get(LOCAL_KEY);
+    if(r&&r.value){const d=JSON.parse(r.value);Object.assign(state,d);}
+  }catch(e){/* nincs még mentés */}
+}
+
+let saveTimer=null;
+function persistProfile(p){
+  if(suppressWrite) return;
+  if(useFirebase){ db.ref(`${ROOT}/profiles/${p}`).update(state.profiles[p]); }
+  else persistLocal();
+}
+function persistDay(p,key){
+  if(suppressWrite) return;
+  if(useFirebase){
+    const list=shiftsFor(p,key);
+    db.ref(`${ROOT}/shifts/${p}/${key}`).set(list.length?list:null);
+  }else persistLocal();
+}
+function persistLocal(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{try{await window.storage.set(LOCAL_KEY,JSON.stringify(state));}catch(e){console.error(e);}},200);
+}
+
+/* ---------- profile UI ---------- */
+function refreshProfileUI(){
+  document.getElementById('nm-p1').textContent=state.profiles.p1.name;
+  document.getElementById('nm-p2').textContent=state.profiles.p2.name;
+  document.getElementById('who').textContent=state.profiles[active].name;
+  document.getElementById('who').style.color=active==='p1'?'var(--amber)':'var(--teal)';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.p===active));
+  document.querySelector('.stat .value.accent').style.color=active==='p1'?'var(--amber)':'var(--teal)';
+  const pay=state.profiles[active].pay||{};
+  document.getElementById('pay-base').value=(pay.base!=null?pay.base:'');
+  document.getElementById('pay-du').value=(pay.duPct!=null?pay.duPct:'');
+  document.getElementById('pay-ej').value=(pay.ejPct!=null?pay.ejPct:'');
+}
+
+/* ---------- render ---------- */
+function renderWeekdays(){
+  const wd=document.getElementById('weekdays');wd.innerHTML='';
+  HU_DOW_SHORT.forEach((d,i)=>{const el=document.createElement('div');el.textContent=d;if(i>=5)el.className='we';wd.appendChild(el);});
+}
+function render(){
+  const y=view.getFullYear(),m=view.getMonth();
+  document.getElementById('month-label').innerHTML=`${HU_MONTHS[m]} <span class="yr">${y}</span>`;
+  const grid=document.getElementById('grid');grid.innerHTML='';
+  const first=new Date(y,m,1);let lead=(first.getDay()+6)%7;
+  const dim=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();
+  const t=new Date(),tKey=keyOf(t.getFullYear(),t.getMonth(),t.getDate());
+  const cells=[];
+  for(let i=0;i<lead;i++)cells.push({d:prev-lead+1+i,out:true});
+  for(let d=1;d<=dim;d++)cells.push({d,out:false});
+  while(cells.length%7!==0)cells.push({d:0,out:true});
+
+  cells.forEach((c,i)=>{
+    const col=i%7,cell=document.createElement('div');
+    cell.className='cell'+(c.out?' out':'')+(col>=5?' we':'');
+    if(!c.out){
+      const key=keyOf(y,m,c.d);
+      if(key===tKey)cell.classList.add('today');
+      cell.innerHTML=`<div class="daynum">${c.d}</div>`;
+      const box=document.createElement('div');box.className='shifts';
+      // saját műszakok
+      const mine=shiftsFor(active,key);
+      mine.slice(0,3).forEach(s=>{
+        const ch=document.createElement('div');ch.className='chip '+active;
+        ch.innerHTML=`${s.s}–${s.e}${s.p?` <span class="pl">${escapeHtml(s.p)}</span>`:''}`;
+        box.appendChild(ch);
+      });
+      if(mine.length>3){const mo=document.createElement('div');mo.className='more';mo.textContent=`+${mine.length-3} további`;box.appendChild(mo);}
+      // társ műszakok (halvány)
+      const mate=shiftsFor(other(active),key);
+      mate.slice(0,2).forEach(s=>{
+        const ch=document.createElement('div');ch.className='chip mate '+other(active);
+        ch.textContent=`${s.s}–${s.e}`;box.appendChild(ch);
+      });
+      cell.appendChild(box);
+      const hint=document.createElement('div');hint.className='add-hint';hint.textContent='+';cell.appendChild(hint);
+      cell.addEventListener('click',()=>openDay(key));
+    }
+    grid.appendChild(cell);
+  });
+  renderTotals();
+}
+function renderTotals(){
+  const y=view.getFullYear(),m=view.getMonth(),pre=`${y}-${pad(m+1)}-`;
+  // per-profil havi órák a fülekre
+  ['p1','p2'].forEach(p=>{
+    let mins=0,cnt=0,earn=0;
+    const pay=state.profiles[p].pay;
+    Object.keys(state.shifts[p]||{}).forEach(k=>{if(k.startsWith(pre)){const l=state.shifts[p][k];cnt+=l.length;l.forEach(s=>{const mn=minutes(s.s,s.e);mins+=mn;earn+=mn/60*rateForShift(pay,s.s);});}});
+    document.getElementById('hr-'+p).textContent=cnt?`${fmtH(mins)} ó`:'';
+    if(p===active){
+      document.getElementById('stat-count').textContent=cnt;
+      document.getElementById('stat-hours').innerHTML=`${fmtH(mins)}<small>ó</small>`;
+      updatePayCalc(earn);
+    }
+  });
+}
+function updatePayCalc(monthEarn){
+  const pay=state.profiles[active].pay||{};
+  const b=pay.base||0, du=b*(1+(pay.duPct||0)/100), ej=b*(1+(pay.ejPct||0)/100);
+  const f=n=>Math.round(n).toLocaleString('hu-HU');
+  let html=`Óradíj pótlékkal: <b class="de">${f(b)}</b> · <b class="du">${f(du)}</b> · <b class="ej">${f(ej)}</b> Ft`;
+  if(monthEarn>0) html+=` &nbsp;·&nbsp; e havi kereset: <b class="earn">≈ ${f(monthEarn)} Ft</b>`;
+  document.getElementById('pay-calc').innerHTML=html;
+}
+
+/* ---------- modal ---------- */
+function openDay(key){
+  openDateKey=key;
+  const[y,m,d]=key.split('-').map(Number),dt=new Date(y,m-1,d),dow=(dt.getDay()+6)%7;
+  const dowEl=document.getElementById('m-dow');dowEl.textContent=HU_DOW[dow];dowEl.className='dow '+active;
+  document.getElementById('m-date').textContent=`${y}. ${HU_MONTHS[m-1].toLowerCase()} ${d}.`;
+  document.getElementById('m-for').textContent=`Beosztás: ${state.profiles[active].name}`;
+  const addBtn=document.getElementById('f-add');addBtn.className='add-btn '+active;
+  document.getElementById('presets').className='presets '+active;
+  updatePresetSel();
+  renderModalList();
+  document.getElementById('scrim').classList.add('open');
+  setTimeout(()=>document.getElementById('f-start').focus(),50);
+}
+function closeModal(){document.getElementById('scrim').classList.remove('open');openDateKey=null;}
+function renderModalList(){
+  // társ jelzés
+  const mateBox=document.getElementById('m-mate');
+  const mate=shiftsFor(other(active),openDateKey);
+  if(mate.length){
+    const times=mate.map(s=>`${s.s}–${s.e}`).join(', ');
+    mateBox.innerHTML=`<div class="mate-note ${other(active)}"><b>${escapeHtml(state.profiles[other(active)].name)}</b> ekkor dolgozik: ${times}</div>`;
+  }else mateBox.innerHTML='';
+  // saját lista
+  const list=shiftsFor(active,openDateKey),box=document.getElementById('m-list');
+  if(!list.length){box.innerHTML='<div class="empty">Még nincs műszak ezen a napon.</div>';return;}
+  box.innerHTML='';
+  list.forEach((s,idx)=>{
+    const row=document.createElement('div');row.className='shift-row';
+    row.innerHTML=`<div class="time">${s.s}–${s.e}</div>
+      <div class="meta">${s.p?`<span class="pl">${escapeHtml(s.p)}</span>`:''}<span class="dur ${active}">${fmtDur(minutes(s.s,s.e))}</span></div>
+      <button class="del" title="Törlés">🗑</button>`;
+    row.querySelector('.del').addEventListener('click',()=>deleteShift(idx));
+    box.appendChild(row);
+  });
+}
+function addShift(){
+  const s=document.getElementById('f-start').value,e=document.getElementById('f-end').value;
+  const p=document.getElementById('f-place').value.trim();
+  if(!s||!e)return;
+  if(!state.shifts[active][openDateKey])state.shifts[active][openDateKey]=[];
+  state.shifts[active][openDateKey].push({s,e,p});
+  state.shifts[active][openDateKey].sort((a,b)=>a.s.localeCompare(b.s));
+  document.getElementById('f-place').value='';
+  persistDay(active,openDateKey);
+  renderModalList();render();
+}
+function deleteShift(idx){
+  state.shifts[active][openDateKey].splice(idx,1);
+  if(!state.shifts[active][openDateKey].length)delete state.shifts[active][openDateKey];
+  persistDay(active,openDateKey);
+  renderModalList();render();
+}
+
+/* ---------- profile rename ---------- */
+function startRename(tab){
+  const p=tab.dataset.p,span=tab.querySelector('.nm');
+  const inp=document.createElement('input');inp.className='nm-input';inp.value=state.profiles[p].name;inp.maxLength=20;
+  span.replaceWith(inp);inp.focus();inp.select();
+  const finish=()=>{
+    const v=inp.value.trim()||state.profiles[p].name;
+    state.profiles[p].name=v;persistProfile(p);
+    const ns=document.createElement('span');ns.className='nm';ns.id='nm-'+p;ns.textContent=v;
+    inp.replaceWith(ns);refreshProfileUI();
+  };
+  inp.addEventListener('blur',finish);
+  inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')inp.blur();if(ev.key==='Escape'){inp.value=state.profiles[p].name;inp.blur();}});
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll('.tab').forEach(tab=>{
+  let clickT=null;
+  tab.addEventListener('click',e=>{
+    if(e.target.classList.contains('nm-input'))return;
+    clearTimeout(clickT);
+    clickT=setTimeout(()=>{active=tab.dataset.p;refreshProfileUI();render();},180);
+  });
+  tab.addEventListener('dblclick',e=>{clearTimeout(clickT);startRename(tab);});
+});
+document.getElementById('prev').onclick=()=>{view.setMonth(view.getMonth()-1);render();};
+document.getElementById('next').onclick=()=>{view.setMonth(view.getMonth()+1);render();};
+document.getElementById('today-btn').onclick=()=>{view=new Date();view.setDate(1);render();};
+document.getElementById('m-close').onclick=closeModal;
+document.getElementById('scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeModal();});
+document.getElementById('f-add').onclick=addShift;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+['f-start','f-end','f-place'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addShift();}));
+
+/* műszak gyorsgombok */
+function updatePresetSel(){
+  const s=document.getElementById('f-start').value,e=document.getElementById('f-end').value;
+  document.querySelectorAll('#presets .preset').forEach(b=>b.classList.toggle('sel',b.dataset.s===s&&b.dataset.e===e));
+}
+document.querySelectorAll('#presets .preset').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.getElementById('f-start').value=b.dataset.s;
+    document.getElementById('f-end').value=b.dataset.e;
+    updatePresetSel();
+  });
+});
+document.getElementById('f-start').addEventListener('input',updatePresetSel);
+document.getElementById('f-end').addEventListener('input',updatePresetSel);
+[['pay-base','base'],['pay-du','duPct'],['pay-ej','ejPct']].forEach(([id,key])=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    const v=parseFloat(document.getElementById(id).value);
+    if(!state.profiles[active].pay)state.profiles[active].pay={...DEFAULT_PAY};
+    state.profiles[active].pay[key]=(isNaN(v)?0:v);
+    persistProfile(active);renderTotals();
+  });
+});
+
+/* ---------- init ---------- */
+(async()=>{
+  await initStore();
+  normalizePay();
+  const sync=document.getElementById('sync');
+  if(useFirebase){sync.classList.add('on');document.getElementById('sync-text').textContent='Firebase szinkron';}
+  else{sync.style.display='none';}
+  refreshProfileUI();renderWeekdays();render();
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='';
+})();
+</script>
+</body>
+</html>
