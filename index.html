@@ -75,6 +75,22 @@
   .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--line)}
   .today-btn{height:38px;padding:0 16px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-soft);color:var(--text);font-weight:500;font-size:13.5px;transition:.15s}
   .today-btn:hover{background:var(--surface-2);border-color:var(--line)}
+  .today-btn.on{background:var(--sel,var(--amber));color:#1a1304;border-color:transparent;font-weight:600}
+
+  /* ---- Selection bar ---- */
+  .selbar{display:none;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+  .selbar.open{display:flex}
+  .selcount{font-size:13px;color:var(--text-dim)} .selcount b{font-family:'Space Grotesk',sans-serif;color:var(--text);font-size:15px;font-variant-numeric:tabular-nums}
+  .selacts{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-left:auto}
+  .sellbl{font-size:12px;color:var(--text-faint);margin-right:1px}
+  .selbtn{height:34px;padding:0 13px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--text);font-size:13px;font-weight:500;transition:.15s}
+  .selbtn:hover{background:var(--surface-2);border-color:var(--line-soft)}
+  .selbtn.del{color:#ff6b6f;border-color:rgba(229,72,77,.3)}
+  .selbtn.del:hover{background:rgba(229,72,77,.12)}
+  .selbtn.done{background:var(--sel,var(--amber));color:#1a1304;border-color:transparent;font-weight:600}
+  .selbtn.done:hover{filter:brightness(1.08)}
+  .selbtn:disabled{opacity:.4;cursor:default}
+  .selbtn:disabled:hover{background:var(--bg-2);border-color:var(--line)}
 
   /* ---- Calendar ---- */
   .cal{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden}
@@ -100,6 +116,12 @@
   .more{font-size:10.5px;color:var(--text-faint);padding-left:2px}
   .add-hint{position:absolute;right:7px;top:7px;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;color:var(--text-faint);font-size:15px;opacity:0;transition:.12s}
   .cell:not(.out):hover .add-hint{opacity:1}
+  .selecting .add-hint{display:none}
+  .cell.sel{background:var(--sel-soft,var(--amber-soft))}
+  .cell.sel:hover{background:var(--sel-soft,var(--amber-soft))}
+  .cell.sel::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 2px var(--sel,var(--amber));border-radius:0;pointer-events:none}
+  .selmark{position:absolute;right:7px;top:7px;width:20px;height:20px;border-radius:6px;background:var(--sel,var(--amber));color:#1a1304;display:none;place-items:center;font-size:13px;font-weight:700;z-index:1}
+  .cell.sel .selmark{display:grid}
 
   /* ---- Modal ---- */
   .scrim{position:fixed;inset:0;background:rgba(8,9,14,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
@@ -210,9 +232,22 @@
   <div class="navbar">
     <div class="month-label" id="month-label">—</div>
     <div class="navbtns">
+      <button class="today-btn" id="sel-toggle">Kijelölés</button>
       <button class="today-btn" id="today-btn">Ma</button>
       <button class="icon-btn" id="prev" aria-label="Előző hónap">‹</button>
       <button class="icon-btn" id="next" aria-label="Következő hónap">›</button>
+    </div>
+  </div>
+
+  <div class="selbar" id="selbar">
+    <span class="selcount"><b id="sel-count">0</b> nap kijelölve</span>
+    <div class="selacts">
+      <span class="sellbl">Mindre:</span>
+      <button class="selbtn" data-s="06:00" data-e="14:00">Délelőtt</button>
+      <button class="selbtn" data-s="14:00" data-e="22:00">Délután</button>
+      <button class="selbtn" data-s="22:00" data-e="06:00">Éjszaka</button>
+      <button class="selbtn del" id="sel-del">Műszakok törlése</button>
+      <button class="selbtn done" id="sel-done">Kész</button>
     </div>
   </div>
 
@@ -299,6 +334,8 @@ let state={
 let active='p1';
 let view=new Date(); view.setDate(1);
 let openDateKey=null;
+let selectMode=false;
+let selected=new Set();
 let useFirebase=false, db=null, suppressWrite=false;
 
 /* ---------- helpers ---------- */
@@ -396,6 +433,9 @@ function refreshProfileUI(){
   document.getElementById('who').style.color=active==='p1'?'var(--amber)':'var(--teal)';
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.p===active));
   document.querySelector('.stat .value.accent').style.color=active==='p1'?'var(--amber)':'var(--teal)';
+  const app=document.getElementById('app');
+  app.style.setProperty('--sel', active==='p1'?'#f5a623':'#3ec9c0');
+  app.style.setProperty('--sel-soft', active==='p1'?'rgba(245,166,35,.14)':'rgba(62,201,192,.15)');
   const pay=state.profiles[active].pay||{};
   document.getElementById('pay-base').value=(pay.base!=null?pay.base:'');
   document.getElementById('pay-du').value=(pay.duPct!=null?pay.duPct:'');
@@ -443,7 +483,15 @@ function render(){
       });
       cell.appendChild(box);
       const hint=document.createElement('div');hint.className='add-hint';hint.textContent='+';cell.appendChild(hint);
-      cell.addEventListener('click',()=>openDay(key));
+      const sm=document.createElement('div');sm.className='selmark';sm.textContent='✓';cell.appendChild(sm);
+      if(selected.has(key))cell.classList.add('sel');
+      cell.addEventListener('click',()=>{
+        if(selectMode){
+          if(selected.has(key)){selected.delete(key);cell.classList.remove('sel');}
+          else{selected.add(key);cell.classList.add('sel');}
+          updateSelCount();
+        }else openDay(key);
+      });
     }
     grid.appendChild(cell);
   });
@@ -555,6 +603,43 @@ document.querySelectorAll('.tab').forEach(tab=>{
 document.getElementById('prev').onclick=()=>{view.setMonth(view.getMonth()-1);render();};
 document.getElementById('next').onclick=()=>{view.setMonth(view.getMonth()+1);render();};
 document.getElementById('today-btn').onclick=()=>{view=new Date();view.setDate(1);render();};
+
+/* ---------- kijelölés mód (több nap egyszerre) ---------- */
+function updateSelCount(){
+  document.getElementById('sel-count').textContent=selected.size;
+  document.getElementById('sel-del').disabled=selected.size===0;
+  document.querySelectorAll('#selbar .selbtn[data-s]').forEach(b=>b.disabled=selected.size===0);
+}
+function toggleSelectMode(on){
+  selectMode=(on!==undefined)?on:!selectMode;
+  if(!selectMode)selected.clear();
+  document.getElementById('app').classList.toggle('selecting',selectMode);
+  document.getElementById('selbar').classList.toggle('open',selectMode);
+  document.getElementById('sel-toggle').textContent=selectMode?'Mégse':'Kijelölés';
+  document.getElementById('sel-toggle').classList.toggle('on',selectMode);
+  updateSelCount();render();
+}
+function bulkAddShift(s,e){
+  selected.forEach(key=>{
+    if(!state.shifts[active][key])state.shifts[active][key]=[];
+    const arr=state.shifts[active][key];
+    if(!arr.some(x=>x.s===s&&x.e===e)){arr.push({s,e,p:''});arr.sort((a,b)=>a.s.localeCompare(b.s));}
+    persistDay(active,key);
+  });
+  render();
+}
+function bulkDelete(){
+  selected.forEach(key=>{
+    if(state.shifts[active][key]){delete state.shifts[active][key];persistDay(active,key);}
+  });
+  render();
+}
+document.getElementById('sel-toggle').onclick=()=>toggleSelectMode();
+document.getElementById('sel-done').onclick=()=>toggleSelectMode(false);
+document.getElementById('sel-del').onclick=bulkDelete;
+document.querySelectorAll('#selbar .selbtn[data-s]').forEach(b=>{
+  b.addEventListener('click',()=>bulkAddShift(b.dataset.s,b.dataset.e));
+});
 document.getElementById('m-close').onclick=closeModal;
 document.getElementById('scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeModal();});
 document.getElementById('f-add').onclick=addShift;
