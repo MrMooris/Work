@@ -185,6 +185,8 @@
   .pay-calc b{font-family:'Space Grotesk',sans-serif;font-weight:600}
   .pay-calc .de{color:var(--amber)} .pay-calc .du{color:#e8954a} .pay-calc .ej{color:var(--teal)}
   .pay-calc .earn{color:var(--text)}
+  .pay-reset{margin-left:auto;height:30px;padding:0 11px;border-radius:7px;background:var(--bg-2);border:1px solid var(--line);color:var(--text-dim);font-size:12px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .pay-reset:hover{color:var(--text);border-color:var(--line-soft)}
   .earn.p1{color:var(--amber)} .earn.p2{color:var(--teal)}
   .sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-faint)}
   .sync .led{width:8px;height:8px;border-radius:50%;background:var(--text-faint)}
@@ -260,12 +262,13 @@
     <div class="pay-box">
       <div class="pay-row">
         <span class="rl">Alapbér</span>
-        <span class="rin"><input type="number" id="pay-base" min="0" step="50"> Ft / óra</span>
+        <span class="rin"><input type="number" id="pay-base" min="0" step="50"> Ft / óra <span style="color:var(--text-faint)">(délelőtt)</span></span>
       </div>
       <div class="pay-row">
         <span class="rl">Műszakpótlék</span>
         <span class="rin du"><i>Délután</i><input type="number" id="pay-du" min="0" step="5"> %</span>
         <span class="rin ej"><i>Éjszaka</i><input type="number" id="pay-ej" min="0" step="5"> %</span>
+        <button class="pay-reset" id="pay-reset" title="Alaphelyzet: 2450 Ft, +30%, +50%">↺ Alaphelyzet</button>
       </div>
       <div class="pay-calc" id="pay-calc"></div>
     </div>
@@ -516,7 +519,7 @@ function updatePayCalc(monthEarn){
   const pay=state.profiles[active].pay||{};
   const b=pay.base||0, du=b*(1+(pay.duPct||0)/100), ej=b*(1+(pay.ejPct||0)/100);
   const f=n=>Math.round(n).toLocaleString('hu-HU');
-  let html=`Óradíj pótlékkal: <b class="de">${f(b)}</b> · <b class="du">${f(du)}</b> · <b class="ej">${f(ej)}</b> Ft`;
+  let html=`Óradíj &nbsp;·&nbsp; Délelőtt <b class="de">${f(b)}</b> · Délután <b class="du">${f(du)}</b> · Éjszaka <b class="ej">${f(ej)}</b> Ft`;
   if(monthEarn>0) html+=` &nbsp;·&nbsp; e havi kereset: <b class="earn">≈ ${f(monthEarn)} Ft</b>`;
   document.getElementById('pay-calc').innerHTML=html;
 }
@@ -668,6 +671,10 @@ document.getElementById('f-end').addEventListener('input',updatePresetSel);
     persistProfile(active);renderTotals();
   });
 });
+document.getElementById('pay-reset').onclick=()=>{
+  state.profiles[active].pay={...DEFAULT_PAY};
+  persistProfile(active);refreshProfileUI();renderTotals();
+};
 
 /* ---------- init ---------- */
 (async()=>{
