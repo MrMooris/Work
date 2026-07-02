@@ -100,6 +100,8 @@
   .cell{min-height:106px;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);padding:7px 7px 8px;position:relative;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;gap:5px}
   .cell:nth-child(7n){border-right:none}
   .cell:hover{background:var(--surface)}
+  .cell.we{background:rgba(245,166,35,.035)}
+  .cell.we:hover{background:var(--surface)}
   .cell.out{cursor:default;opacity:.36}
   .cell.out:hover{background:transparent}
   .daynum{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--text-dim);width:26px;height:26px;display:grid;place-items:center;border-radius:7px}
@@ -180,6 +182,8 @@
   .rin.du i{color:#e8954a} .rin.ej i{color:var(--teal)}
   .pay-box input{width:70px;padding:7px 9px;font-size:13.5px;font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;color:var(--text)}
   .pay-box input:focus{outline:none;border-color:var(--amber-line)}
+  .pay-box select{background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color:var(--text);font-family:inherit;font-size:13px;cursor:pointer}
+  .pay-box select:focus{outline:none;border-color:var(--amber-line)}
   .pay-reset{margin-left:auto;height:30px;padding:0 11px;border-radius:7px;background:var(--bg-2);border:1px solid var(--line);color:var(--text-dim);font-size:12px;cursor:pointer;transition:.15s;white-space:nowrap}
   .pay-reset:hover{color:var(--text);border-color:var(--line-soft)}
   .earn.p1{color:var(--amber)} .earn.p2{color:var(--teal)}
@@ -224,7 +228,7 @@
     <div class="totals">
       <div class="stat"><div class="label">Műszak / hó</div><div class="value" id="stat-count">0</div></div>
       <div class="stat"><div class="label">Óra / hó</div><div class="value accent" id="stat-hours">0<small>ó</small></div></div>
-      <div class="stat"><div class="label">Kereset / hó</div><div class="value" id="stat-earn">–</div></div>
+      <div class="stat"><div class="label">Kereset / hó</div><div class="value" id="stat-earn">0<small> Ft</small></div></div>
     </div>
   </header>
 
@@ -257,13 +261,21 @@
     <div class="pay-box">
       <div class="pay-row">
         <span class="rl">Alapbér</span>
-        <span class="rin"><input type="number" id="pay-base" min="0" step="50"> Ft / óra <span style="color:var(--text-faint)">(délelőtt)</span></span>
+        <span class="rin"><input type="number" id="pay-base" min="0" step="50"> Ft / óra</span>
       </div>
       <div class="pay-row">
         <span class="rl">Műszakpótlék</span>
-        <span class="rin du"><i>Délután</i><input type="number" id="pay-du" min="0" step="5"> %</span>
-        <span class="rin ej"><i>Éjszaka</i><input type="number" id="pay-ej" min="0" step="5"> %</span>
+        <span class="rin du"><i>Délután (18–22)</i><input type="number" id="pay-du" min="0" step="5"> %</span>
+        <span class="rin ej"><i>Éjszaka (22–06)</i><input type="number" id="pay-ej" min="0" step="5"> %</span>
         <button class="pay-reset" id="pay-reset" title="Alaphelyzet: 2450 Ft, +30%, +50%">↺ Alaphelyzet</button>
+      </div>
+      <div class="pay-row">
+        <span class="rl">Munkaközi szünet</span>
+        <select id="pay-break">
+          <option value="0">Nincs (0 perc)</option>
+          <option value="20">20 perc</option>
+          <option value="30">30 perc</option>
+        </select>
       </div>
     </div>
     <div class="sync" id="sync"><span class="led"></span><span id="sync-text">Helyi mentés</span></div>
@@ -326,7 +338,8 @@ const LOCAL_KEY='moori-munkanaptar-2fo-v1';
 
 let state={
   profiles:{ p1:{name:'1. fő',rates:null}, p2:{name:'2. fő',rates:null} },
-  shifts:{ p1:{}, p2:{} }   // { 'YYYY-MM-DD':[{s,e,p}] }
+  shifts:{ p1:{}, p2:{} },   // { 'YYYY-MM-DD':[{s,e,p}] }
+  settings:{ breakMin:30 }   // munkaközi szünet, globálisan mindkét profilra
 };
 let active='p1';
 let view=new Date(); view.setDate(1);
@@ -360,13 +373,32 @@ function normalizePay(){
     delete pr.rates; delete pr.rate;
   });
 }
-// műszak besorolása + tényleges óradíj (alapbér + pótlék) a kezdési idő alapján
-function rateForShift(pay,start){
-  if(!pay) return 0;
-  const b=pay.base||0,h=parseInt(start.split(':')[0],10);
-  if(h>=22||h<6) return b*(1+(pay.ejPct||0)/100);   // éjszaka 22–06
-  if(h>=14)      return b*(1+(pay.duPct||0)/100);   // délután 14–22
-  return b;                                          // délelőtt 06–14
+// két intervallum [s1,e1) és [s2,e2) átfedésének hossza percben
+function overlap1D(s1,e1,s2,e2){ return Math.max(0, Math.min(e1,e2)-Math.max(s1,s2)); }
+// a [S,S+dur) műszak hány perce esik egy napi ismétlődő ablakba (winStartH–winEndH óra, éjfélen átnyúlhat)
+function overlapWithDailyWindow(S,dur,winStartH,winEndH){
+  const E=S+dur, ws=winStartH*60, we=winEndH*60; let total=0;
+  for(let d=0;d<3;d++){
+    if(ws<we){ total+=overlap1D(S,E, d*1440+ws, d*1440+we); }
+    else{ total+=overlap1D(S,E, d*1440+ws, d*1440+1440); total+=overlap1D(S,E, d*1440+1440, d*1440+1440+we); }
+  }
+  return total;
+}
+// egy műszak (s,e) pótlékos óráinak szétválasztása: délutáni (18–22) és éjszakai (22–06) percek
+function shiftWindowMinutes(s,e){
+  const [sh,sm]=s.split(':').map(Number), S=sh*60+sm, dur=minutes(s,e);
+  const duMin=overlapWithDailyWindow(S,dur,18,22);
+  const ejMin=overlapWithDailyWindow(S,dur,22,6);
+  return {dur,duMin,ejMin};
+}
+// egy adott műszak fizetett bére: (fizetett óra × alapbér) + (délutáni óra × alapbér × pótlék%) + (éjszakai óra × alapbér × pótlék%)
+function computeShiftPay(pay,breakMin,s,e){
+  if(!pay) return {pay:0,paidMin:0,duMin:0,ejMin:0};
+  const {dur,duMin,ejMin}=shiftWindowMinutes(s,e);
+  const paidMin=Math.max(0,dur-(breakMin||0));
+  const base=pay.base||0;
+  const amount = (paidMin/60)*base + (duMin/60)*base*((pay.duPct||0)/100) + (ejMin/60)*base*((pay.ejPct||0)/100);
+  return {pay:amount,paidMin,duMin,ejMin};
 }
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -391,6 +423,7 @@ async function initStore(){
         normalizePay();
         state.shifts.p1=(v.shifts?.p1)||{};
         state.shifts.p2=(v.shifts?.p2)||{};
+        state.settings={ breakMin:(v.settings?.breakMin!=null? v.settings.breakMin:30) };
         suppressWrite=false;
         refreshProfileUI(); render();
       });
@@ -421,6 +454,11 @@ function persistLocal(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{try{await window.storage.set(LOCAL_KEY,JSON.stringify(state));}catch(e){console.error(e);}},200);
 }
+function persistSettings(){
+  if(suppressWrite) return;
+  if(useFirebase){ db.ref(`${ROOT}/settings`).update(state.settings); }
+  else persistLocal();
+}
 
 /* ---------- profile UI ---------- */
 function refreshProfileUI(){
@@ -437,6 +475,7 @@ function refreshProfileUI(){
   document.getElementById('pay-base').value=(pay.base!=null?pay.base:'');
   document.getElementById('pay-du').value=(pay.duPct!=null?pay.duPct:'');
   document.getElementById('pay-ej').value=(pay.ejPct!=null?pay.ejPct:'');
+  document.getElementById('pay-break').value=String(state.settings?.breakMin??30);
 }
 
 /* ---------- render ---------- */
@@ -496,22 +535,28 @@ function render(){
 }
 function renderTotals(){
   const y=view.getFullYear(),m=view.getMonth(),pre=`${y}-${pad(m+1)}-`;
+  const brk=state.settings?.breakMin||0;
   // per-profil havi órák a fülekre
   ['p1','p2'].forEach(p=>{
-    let mins=0,cnt=0,earn=0;
+    let paidMins=0,cnt=0,earn=0;
     const pay=state.profiles[p].pay;
-    Object.keys(state.shifts[p]||{}).forEach(k=>{if(k.startsWith(pre)){const l=state.shifts[p][k];cnt+=l.length;l.forEach(s=>{const mn=minutes(s.s,s.e);mins+=mn;earn+=mn/60*rateForShift(pay,s.s);});}});
-    document.getElementById('hr-'+p).textContent=cnt?`${fmtH(mins)} ó`:'';
+    Object.keys(state.shifts[p]||{}).forEach(k=>{
+      if(k.startsWith(pre)){
+        const l=state.shifts[p][k];cnt+=l.length;
+        l.forEach(s=>{const r=computeShiftPay(pay,brk,s.s,s.e);paidMins+=r.paidMin;earn+=r.pay;});
+      }
+    });
+    document.getElementById('hr-'+p).textContent=cnt?`${fmtH(paidMins)} ó`:'';
     if(p===active){
       document.getElementById('stat-count').textContent=cnt;
-      document.getElementById('stat-hours').innerHTML=`${fmtH(mins)}<small>ó</small>`;
+      document.getElementById('stat-hours').innerHTML=`${fmtH(paidMins)}<small>ó</small>`;
       updatePayCalc(earn);
     }
   });
 }
 function updatePayCalc(monthEarn){
   const f=n=>Math.round(n).toLocaleString('hu-HU');
-  document.getElementById('stat-earn').innerHTML = monthEarn>0 ? `${f(monthEarn)}<small> Ft</small>` : '–';
+  document.getElementById('stat-earn').innerHTML = `${f(monthEarn)}<small> Ft</small>`;
 }
 
 /* ---------- modal ---------- */
@@ -542,9 +587,12 @@ function renderModalList(){
   if(!list.length){box.innerHTML='<div class="empty">Még nincs műszak ezen a napon.</div>';return;}
   box.innerHTML='';
   list.forEach((s,idx)=>{
+    const brk=state.settings?.breakMin||0;
+    const r=computeShiftPay(state.profiles[active].pay,brk,s.s,s.e);
+    const f=n=>Math.round(n).toLocaleString('hu-HU');
     const row=document.createElement('div');row.className='shift-row';
     row.innerHTML=`<div class="time">${s.s}–${s.e}</div>
-      <div class="meta">${s.p?`<span class="pl">${escapeHtml(s.p)}</span>`:''}<span class="dur ${active}">${fmtDur(minutes(s.s,s.e))}</span></div>
+      <div class="meta">${s.p?`<span class="pl">${escapeHtml(s.p)}</span>`:''}<span class="dur ${active}">${fmtDur(r.paidMin)} fizetett${brk?` (–${brk}p szünet)`:''} · ${f(r.pay)} Ft</span></div>
       <button class="del" title="Törlés">🗑</button>`;
     row.querySelector('.del').addEventListener('click',()=>deleteShift(idx));
     box.appendChild(row);
@@ -665,6 +713,13 @@ document.getElementById('pay-reset').onclick=()=>{
   state.profiles[active].pay={...DEFAULT_PAY};
   persistProfile(active);refreshProfileUI();renderTotals();
 };
+document.getElementById('pay-break').addEventListener('change',()=>{
+  const v=parseInt(document.getElementById('pay-break').value,10);
+  if(!state.settings)state.settings={breakMin:30};
+  state.settings.breakMin=(isNaN(v)?0:v);
+  persistSettings();renderTotals();renderModalListIfOpen();
+});
+function renderModalListIfOpen(){ if(openDateKey && document.getElementById('scrim').classList.contains('open')) renderModalList(); }
 
 /* ---------- init ---------- */
 (async()=>{
