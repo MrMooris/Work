@@ -41,10 +41,12 @@
   .tab .dot{width:9px;height:9px;border-radius:50%;flex:none}
   .tab[data-p="p1"] .dot{background:var(--amber)}
   .tab[data-p="p2"] .dot{background:var(--teal)}
+  .tab[data-p="summary"] .dot{background:var(--sum,#b98cf0)}
   .tab .nm{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tab .hr{font-size:12px;color:var(--text-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
   .tab.active[data-p="p1"]{border-color:var(--amber-line);background:var(--amber-soft)}
   .tab.active[data-p="p2"]{border-color:var(--teal-line);background:var(--teal-soft)}
+  .tab.active[data-p="summary"]{border-color:rgba(185,140,240,.42);background:rgba(185,140,240,.14)}
   .tab .nm-input{
     font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
     background:var(--bg);border:1px solid var(--line);border-radius:7px;
@@ -95,12 +97,12 @@
   .cal{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden}
   .weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line-soft)}
   .weekdays div{text-align:center;padding:11px 4px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
-  .weekdays div.we{color:var(--amber);opacity:.6}
+  .weekdays div.we{color:var(--sel,var(--amber));opacity:.75}
   .grid{display:grid;grid-template-columns:repeat(7,1fr)}
   .cell{min-height:106px;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);padding:7px 7px 8px;position:relative;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;gap:5px}
   .cell:nth-child(7n){border-right:none}
   .cell:hover{background:var(--surface)}
-  .cell.we{background:rgba(245,166,35,.035)}
+  .cell.we{background:var(--we-tint,rgba(245,166,35,.035))}
   .cell.we:hover{background:var(--surface)}
   .cell.holiday{background:rgba(229,72,77,.07);padding-top:24px}
   .cell.holiday:hover{background:rgba(229,72,77,.11)}
@@ -111,7 +113,7 @@
   .cell.out{cursor:default;opacity:.36}
   .cell.out:hover{background:transparent}
   .daynum{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--text-dim);width:26px;height:26px;display:grid;place-items:center;border-radius:7px}
-  .cell.we .daynum{color:var(--amber);opacity:.75}
+  .cell.we .daynum{color:var(--sel,var(--amber));opacity:.85}
   .cell.today .daynum{background:var(--text);color:var(--bg);font-weight:700;opacity:1}
   .shifts{display:flex;flex-direction:column;gap:4px;overflow:hidden}
   .chip{border-radius:6px;padding:3px 7px;font-size:11px;line-height:1.25;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -155,6 +157,14 @@
   .del:hover{color:#ff6b6f;background:rgba(229,72,77,.12)}
   .empty{font-size:13px;color:var(--text-faint);text-align:center;padding:14px 0 16px}
   .mate-note{font-size:12px;color:var(--text-faint);background:var(--bg-2);border:1px dashed var(--line);border-radius:9px;padding:8px 11px;margin-bottom:14px}
+  .modal-profile-switch{display:flex;gap:8px;margin-bottom:14px}
+  .mps-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:9px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim);transition:.15s}
+  .mps-btn:hover{border-color:var(--line-soft)}
+  .mps-btn .dot{width:8px;height:8px;border-radius:50%;background:var(--text-faint)}
+  .mps-btn[data-p="p1"] .dot{background:var(--amber)}
+  .mps-btn[data-p="p2"] .dot{background:var(--teal)}
+  .mps-btn.active[data-p="p1"]{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber)}
+  .mps-btn.active[data-p="p2"]{background:var(--teal-soft);border-color:var(--teal-line);color:var(--teal)}
   .holiday-toggle{display:flex;align-items:center;gap:9px;background:rgba(229,72,77,.08);border:1px solid rgba(229,72,77,.28);border-radius:10px;padding:10px 12px;margin-bottom:14px;cursor:pointer;font-size:13px;color:var(--text)}
   .holiday-toggle input{width:16px;height:16px;accent-color:#e5484d;cursor:pointer}
   .holiday-toggle i{font-style:normal;color:var(--text-faint);font-size:11.5px}
@@ -257,6 +267,7 @@
   <div class="tabs" id="tabs">
     <div class="tab active" data-p="p1"><span class="dot"></span><span class="nm" id="nm-p1">1. fő</span><span class="hr" id="hr-p1"></span></div>
     <div class="tab" data-p="p2"><span class="dot"></span><span class="nm" id="nm-p2">2. fő</span><span class="hr" id="hr-p2"></span></div>
+    <div class="tab" data-p="summary"><span class="dot"></span><span class="nm">Összesítő</span></div>
   </div>
 
   <header>
@@ -300,15 +311,20 @@
 
   <div class="footer">
     <div class="pay-box">
-      <div class="pay-row">
-        <span class="rl">Alapbér</span>
-        <span class="rin"><input type="number" id="pay-base" min="0" step="50"> Ft / óra</span>
+      <div id="pay-profile-rows">
+        <div class="pay-row">
+          <span class="rl">Alapbér</span>
+          <span class="rin"><input type="number" id="pay-base" min="0" step="50"> Ft / óra</span>
+        </div>
+        <div class="pay-row">
+          <span class="rl">Műszakpótlék</span>
+          <span class="rin du"><i>Délután (18–22)</i><input type="number" id="pay-du" min="0" step="5"> %</span>
+          <span class="rin ej"><i>Éjszaka (22–06)</i><input type="number" id="pay-ej" min="0" step="5"> %</span>
+          <button class="pay-reset" id="pay-reset" title="Alaphelyzet: 2450 Ft, +30%, +50%">↺ Alaphelyzet</button>
+        </div>
       </div>
-      <div class="pay-row">
-        <span class="rl">Műszakpótlék</span>
-        <span class="rin du"><i>Délután (18–22)</i><input type="number" id="pay-du" min="0" step="5"> %</span>
-        <span class="rin ej"><i>Éjszaka (22–06)</i><input type="number" id="pay-ej" min="0" step="5"> %</span>
-        <button class="pay-reset" id="pay-reset" title="Alaphelyzet: 2450 Ft, +30%, +50%">↺ Alaphelyzet</button>
+      <div class="pay-row" id="pay-summary-note" style="display:none">
+        <span style="font-size:12.5px;color:var(--text-faint)">Válts át 1. vagy 2. fő fülre az alapbér és a pótlékok szerkesztéséhez — ezek profilonként külön állíthatók.</span>
       </div>
       <div class="pay-row">
         <span class="rl">Munkaközi szünet</span>
@@ -356,6 +372,10 @@
       <button class="close-x" id="m-close" aria-label="Bezárás">×</button>
     </div>
     <div class="modal-body">
+      <div class="modal-profile-switch" id="modal-profile-switch" style="display:none">
+        <button class="mps-btn" data-p="p1"><span class="dot"></span><span id="mps-nm-p1">1. fő</span></button>
+        <button class="mps-btn" data-p="p2"><span class="dot"></span><span id="mps-nm-p2">2. fő</span></button>
+      </div>
       <label class="holiday-toggle" id="holiday-toggle">
         <input type="checkbox" id="holiday-check">
         <span>Ünnepnap <i>(+100% bérpótlék erre a napra)</i></span>
@@ -413,6 +433,8 @@ let state={
 let active='p1';
 let view=new Date(); view.setDate(1);
 let openDateKey=null;
+let modalProfile='p1'; // Összesítő módban ez választja ki, melyik fő beosztását szerkeszted a modalban
+function modalActiveProfile(){ return active==='summary' ? modalProfile : active; }
 let selectMode=false;
 let selected=new Set();
 let useFirebase=false, db=null, suppressWrite=false;
@@ -556,20 +578,32 @@ function persistGasSettings(){
 function refreshProfileUI(){
   document.getElementById('nm-p1').textContent=state.profiles.p1.name;
   document.getElementById('nm-p2').textContent=state.profiles.p2.name;
-  document.getElementById('who').textContent=state.profiles[active].name;
-  document.getElementById('who').style.color=active==='p1'?'var(--amber)':'var(--teal)';
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.p===active));
-  document.querySelector('.stat .value.accent').style.color=active==='p1'?'var(--amber)':'var(--teal)';
   const app=document.getElementById('app');
-  app.style.setProperty('--sel', active==='p1'?'#f5a623':'#3ec9c0');
-  app.style.setProperty('--sel-soft', active==='p1'?'rgba(245,166,35,.14)':'rgba(62,201,192,.15)');
-  const pay=state.profiles[active].pay||{};
-  document.getElementById('pay-base').value=(pay.base!=null?pay.base:'');
-  document.getElementById('pay-du').value=(pay.duPct!=null?pay.duPct:'');
-  document.getElementById('pay-ej').value=(pay.ejPct!=null?pay.ejPct:'');
+  const isSummary=active==='summary';
+  if(isSummary){
+    document.getElementById('who').textContent='Összesítő';
+    document.getElementById('who').style.color='var(--sum,#b98cf0)';
+    document.querySelector('.stat .value.accent').style.color='var(--sum,#b98cf0)';
+    app.style.setProperty('--sel','#b98cf0');
+    app.style.setProperty('--sel-soft','rgba(185,140,240,.14)');
+    app.style.setProperty('--we-tint','rgba(185,140,240,.045)');
+  }else{
+    document.getElementById('who').textContent=state.profiles[active].name;
+    document.getElementById('who').style.color=active==='p1'?'var(--amber)':'var(--teal)';
+    document.querySelector('.stat .value.accent').style.color=active==='p1'?'var(--amber)':'var(--teal)';
+    app.style.setProperty('--sel', active==='p1'?'#f5a623':'#3ec9c0');
+    app.style.setProperty('--sel-soft', active==='p1'?'rgba(245,166,35,.14)':'rgba(62,201,192,.15)');
+    app.style.setProperty('--we-tint', active==='p1'?'rgba(245,166,35,.045)':'rgba(62,201,192,.045)');
+    const pay=state.profiles[active].pay||{};
+    document.getElementById('pay-base').value=(pay.base!=null?pay.base:'');
+    document.getElementById('pay-du').value=(pay.duPct!=null?pay.duPct:'');
+    document.getElementById('pay-ej').value=(pay.ejPct!=null?pay.ejPct:'');
+  }
+  document.getElementById('pay-profile-rows').style.display=isSummary?'none':'';
+  document.getElementById('pay-summary-note').style.display=isSummary?'':'none';
+  document.getElementById('sel-toggle').style.display=isSummary?'none':'';
   document.getElementById('pay-break').value=String(state.settings?.breakMin??30);
-  const fp=document.getElementById('fuel-payer');
-  if(fp) fp.innerHTML=`<option value="p1">${escapeHtml(state.profiles.p1.name)} fizetett</option><option value="p2">${escapeHtml(state.profiles.p2.name)} fizetett</option>`;
 }
 
 /* ---------- render ---------- */
@@ -599,21 +633,33 @@ function render(){
       cell.innerHTML=`<div class="daynum">${c.d}</div>`;
       if(state.holidays[key]){const hb=document.createElement('div');hb.className='holiday-badge';hb.textContent='ünnep';cell.appendChild(hb);}
       const box=document.createElement('div');box.className='shifts';
-      // saját műszakok
-      const mine=shiftsFor(active,key);
-      mine.slice(0,3).forEach(s=>{
-        const ch=document.createElement('div');ch.className='chip '+active+(s.v?' verified':'');
-        ch.innerHTML=`${s.v?'<span class="vmark">✓</span> ':''}${s.s}–${s.e}${s.p?` <span class="pl">${escapeHtml(s.p)}</span>`:''}`;
-        box.appendChild(ch);
-      });
-      if(mine.length>3){const mo=document.createElement('div');mo.className='more';mo.textContent=`+${mine.length-3} további`;box.appendChild(mo);}
-      // társ műszakok (halvány)
-      const mate=shiftsFor(other(active),key);
-      mate.slice(0,2).forEach(s=>{
-        const ch=document.createElement('div');ch.className='chip mate '+other(active);
-        ch.textContent=`${s.s}–${s.e}`;box.appendChild(ch);
-      });
-      cell.appendChild(box);
+      if(active==='summary'){
+        // mindkét fő műszakja teljes színnel, egyenrangúan
+        ['p1','p2'].forEach(p=>{
+          shiftsFor(p,key).forEach(s=>{
+            const ch=document.createElement('div');ch.className='chip '+p+(s.v?' verified':'');
+            ch.innerHTML=`${s.v?'<span class="vmark">✓</span> ':''}${s.s}–${s.e}`;
+            box.appendChild(ch);
+          });
+        });
+        cell.appendChild(box);
+      }else{
+        // saját műszakok
+        const mine=shiftsFor(active,key);
+        mine.slice(0,3).forEach(s=>{
+          const ch=document.createElement('div');ch.className='chip '+active+(s.v?' verified':'');
+          ch.innerHTML=`${s.v?'<span class="vmark">✓</span> ':''}${s.s}–${s.e}${s.p?` <span class="pl">${escapeHtml(s.p)}</span>`:''}`;
+          box.appendChild(ch);
+        });
+        if(mine.length>3){const mo=document.createElement('div');mo.className='more';mo.textContent=`+${mine.length-3} további`;box.appendChild(mo);}
+        // társ műszakok (halvány)
+        const mate=shiftsFor(other(active),key);
+        mate.slice(0,2).forEach(s=>{
+          const ch=document.createElement('div');ch.className='chip mate '+other(active);
+          ch.textContent=`${s.s}–${s.e}`;box.appendChild(ch);
+        });
+        cell.appendChild(box);
+      }
       const hint=document.createElement('div');hint.className='add-hint';hint.textContent='+';cell.appendChild(hint);
       const sm=document.createElement('div');sm.className='selmark';sm.textContent='✓';cell.appendChild(sm);
       if(selected.has(key))cell.classList.add('sel');
@@ -622,7 +668,7 @@ function render(){
           if(selected.has(key)){selected.delete(key);cell.classList.remove('sel');}
           else{selected.add(key);cell.classList.add('sel');}
           updateSelCount();
-        }else openDay(key);
+        }else{ modalProfile='p1'; openDay(key); }
       });
     }
     grid.appendChild(cell);
@@ -632,6 +678,7 @@ function render(){
 function renderTotals(){
   const y=view.getFullYear(),m=view.getMonth(),pre=`${y}-${pad(m+1)}-`;
   const brk=state.settings?.breakMin||0;
+  const results={};
   // per-profil havi órák a fülekre
   ['p1','p2'].forEach(p=>{
     let paidMins=0,cnt=0,earn=0;
@@ -643,14 +690,36 @@ function renderTotals(){
         l.forEach(s=>{const r=computeShiftPay(pay,brk,s.s,s.e,isHoliday);paidMins+=r.paidMin;earn+=r.pay;});
       }
     });
+    results[p]={paidMins,cnt,earn};
     document.getElementById('hr-'+p).textContent=cnt?`${fmtH(paidMins)} ó`:'';
-    if(p===active){
-      document.getElementById('stat-count').textContent=cnt;
-      document.getElementById('stat-hours').innerHTML=`${fmtH(paidMins)}<small>ó</small>`;
-      updatePayCalc(earn);
-    }
   });
+  if(active==='summary'){
+    const cnt=results.p1.cnt+results.p2.cnt;
+    const paidMins=results.p1.paidMins+results.p2.paidMins;
+    const grossEarn=results.p1.earn+results.p2.earn;
+    document.getElementById('stat-count').textContent=cnt;
+    document.getElementById('stat-hours').innerHTML=`${fmtH(paidMins)}<small>ó</small>`;
+    updatePayCalcSummary(grossEarn);
+  }else{
+    document.getElementById('stat-count').textContent=results[active].cnt;
+    document.getElementById('stat-hours').innerHTML=`${fmtH(results[active].paidMins)}<small>ó</small>`;
+    updatePayCalc(results[active].earn);
+  }
   renderGasCalc();
+}
+function updatePayCalcSummary(grossEarn){
+  // a benzinelszámolás a két fő közötti belső transzfer, a háztartás összesített keresetét nem csökkenti
+  const f=n=>Math.round(n).toLocaleString('hu-HU');
+  const {haviBenzinElszamolas,kozosNapokSzama}=computeGasMonthly();
+  const gasLabel=document.getElementById('stat-gas-label');
+  const gasVal=document.getElementById('stat-gas');
+  gasLabel.textContent='Benzin elszámolás';
+  gasVal.className='value';
+  gasVal.innerHTML = kozosNapokSzama>0 ? `${f(haviBenzinElszamolas)}<small> Ft</small>` : '–';
+  gasVal.title = `${kozosNapokSzama} közös nap alapján, ${state.profiles.p1.name} → ${state.profiles.p2.name} belső elszámolás`;
+  const earnEl=document.getElementById('stat-earn');
+  earnEl.innerHTML = `${f(grossEarn)}<small> Ft</small>`;
+  earnEl.title = 'Összesített bruttó kereset (1. fő + 2. fő) — a benzinelszámolás csak a kettejük közti elosztást módosítja, az összeget nem';
 }
 function updatePayCalc(grossEarn){
   const f=n=>Math.round(n).toLocaleString('hu-HU');
@@ -677,12 +746,20 @@ function updatePayCalc(grossEarn){
 /* ---------- modal ---------- */
 function openDay(key){
   openDateKey=key;
+  const mp=modalActiveProfile();
   const[y,m,d]=key.split('-').map(Number),dt=new Date(y,m-1,d),dow=(dt.getDay()+6)%7;
-  const dowEl=document.getElementById('m-dow');dowEl.textContent=HU_DOW[dow];dowEl.className='dow '+active;
+  const dowEl=document.getElementById('m-dow');dowEl.textContent=HU_DOW[dow];dowEl.className='dow '+mp;
   document.getElementById('m-date').textContent=`${y}. ${HU_MONTHS[m-1].toLowerCase()} ${d}.`;
-  document.getElementById('m-for').textContent=`Beosztás: ${state.profiles[active].name}`;
-  const addBtn=document.getElementById('f-add');addBtn.className='add-btn '+active;
-  document.getElementById('presets').className='presets '+active;
+  document.getElementById('m-for').textContent=`Beosztás: ${state.profiles[mp].name}`;
+  const sw=document.getElementById('modal-profile-switch');
+  sw.style.display=(active==='summary')?'flex':'none';
+  if(active==='summary'){
+    document.getElementById('mps-nm-p1').textContent=state.profiles.p1.name;
+    document.getElementById('mps-nm-p2').textContent=state.profiles.p2.name;
+    document.querySelectorAll('.mps-btn').forEach(b=>b.classList.toggle('active',b.dataset.p===modalProfile));
+  }
+  const addBtn=document.getElementById('f-add');addBtn.className='add-btn '+mp;
+  document.getElementById('presets').className='presets '+mp;
   updatePresetSel();
   renderBusHint();
   document.getElementById('holiday-check').checked=!!state.holidays[key];
@@ -691,26 +768,35 @@ function openDay(key){
   setTimeout(()=>document.getElementById('f-start').focus(),50);
 }
 function closeModal(){document.getElementById('scrim').classList.remove('open');openDateKey=null;}
+document.querySelectorAll('.mps-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    modalProfile=b.dataset.p;
+    openDay(openDateKey);
+  });
+});
 function renderModalList(){
-  // társ jelzés
+  const mp=modalActiveProfile();
+  // társ jelzés (Összesítő módban nem kell, ott mindkettő listája külön látszik a saját nap-modaljában)
   const mateBox=document.getElementById('m-mate');
-  const mate=shiftsFor(other(active),openDateKey);
-  if(mate.length){
-    const times=mate.map(s=>`${s.s}–${s.e}`).join(', ');
-    mateBox.innerHTML=`<div class="mate-note ${other(active)}"><b>${escapeHtml(state.profiles[other(active)].name)}</b> ekkor dolgozik: ${times}</div>`;
+  if(active!=='summary'){
+    const mate=shiftsFor(other(active),openDateKey);
+    if(mate.length){
+      const times=mate.map(s=>`${s.s}–${s.e}`).join(', ');
+      mateBox.innerHTML=`<div class="mate-note ${other(active)}"><b>${escapeHtml(state.profiles[other(active)].name)}</b> ekkor dolgozik: ${times}</div>`;
+    }else mateBox.innerHTML='';
   }else mateBox.innerHTML='';
-  // saját lista
-  const list=shiftsFor(active,openDateKey),box=document.getElementById('m-list');
+  // saját (vagy a modalban kiválasztott) lista
+  const list=shiftsFor(mp,openDateKey),box=document.getElementById('m-list');
   if(!list.length){box.innerHTML='<div class="empty">Még nincs műszak ezen a napon.</div>';return;}
   box.innerHTML='';
   list.forEach((s,idx)=>{
     const brk=state.settings?.breakMin||0;
     const isHoliday=!!state.holidays[openDateKey];
-    const r=computeShiftPay(state.profiles[active].pay,brk,s.s,s.e,isHoliday);
+    const r=computeShiftPay(state.profiles[mp].pay,brk,s.s,s.e,isHoliday);
     const f=n=>Math.round(n).toLocaleString('hu-HU');
     const row=document.createElement('div');row.className='shift-row'+(s.v?' verified':'');
     row.innerHTML=`<div class="time">${s.s}–${s.e}</div>
-      <div class="meta">${s.p?`<span class="pl">${escapeHtml(s.p)}</span>`:''}<span class="dur ${active}">${fmtDur(r.paidMin)} fizetett${brk?` (–${brk}p szünet)`:''} · ${f(r.pay)} Ft${isHoliday?' · ünnepi':''}</span></div>
+      <div class="meta">${s.p?`<span class="pl">${escapeHtml(s.p)}</span>`:''}<span class="dur ${mp}">${fmtDur(r.paidMin)} fizetett${brk?` (–${brk}p szünet)`:''} · ${f(r.pay)} Ft${isHoliday?' · ünnepi':''}</span></div>
       <label class="verify-check" title="Koordinátor leigazolta"><input type="checkbox" ${s.v?'checked':''}><span>Igazolva</span></label>
       <button class="del" title="Törlés">🗑</button>`;
     row.querySelector('.verify-check input').addEventListener('change',e=>toggleVerified(idx,e.target.checked));
@@ -719,25 +805,28 @@ function renderModalList(){
   });
 }
 function addShift(){
+  const mp=modalActiveProfile();
   const s=document.getElementById('f-start').value,e=document.getElementById('f-end').value;
   const p=document.getElementById('f-place').value.trim();
   if(!s||!e)return;
-  if(!state.shifts[active][openDateKey])state.shifts[active][openDateKey]=[];
-  state.shifts[active][openDateKey].push({s,e,p});
-  state.shifts[active][openDateKey].sort((a,b)=>a.s.localeCompare(b.s));
+  if(!state.shifts[mp][openDateKey])state.shifts[mp][openDateKey]=[];
+  state.shifts[mp][openDateKey].push({s,e,p});
+  state.shifts[mp][openDateKey].sort((a,b)=>a.s.localeCompare(b.s));
   document.getElementById('f-place').value='';
-  persistDay(active,openDateKey);
+  persistDay(mp,openDateKey);
   renderModalList();render();
 }
 function deleteShift(idx){
-  state.shifts[active][openDateKey].splice(idx,1);
-  if(!state.shifts[active][openDateKey].length)delete state.shifts[active][openDateKey];
-  persistDay(active,openDateKey);
+  const mp=modalActiveProfile();
+  state.shifts[mp][openDateKey].splice(idx,1);
+  if(!state.shifts[mp][openDateKey].length)delete state.shifts[mp][openDateKey];
+  persistDay(mp,openDateKey);
   renderModalList();render();
 }
 function toggleVerified(idx,checked){
-  state.shifts[active][openDateKey][idx].v=checked;
-  persistDay(active,openDateKey);
+  const mp=modalActiveProfile();
+  state.shifts[mp][openDateKey][idx].v=checked;
+  persistDay(mp,openDateKey);
   renderModalList();render();
 }
 function toggleHoliday(checked){
@@ -769,9 +858,13 @@ document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click',e=>{
     if(e.target.classList.contains('nm-input'))return;
     clearTimeout(clickT);
-    clickT=setTimeout(()=>{active=tab.dataset.p;refreshProfileUI();render();},180);
+    clickT=setTimeout(()=>{
+      active=tab.dataset.p;
+      if(active==='summary' && selectMode) toggleSelectMode(false);
+      refreshProfileUI();render();
+    },180);
   });
-  tab.addEventListener('dblclick',e=>{clearTimeout(clickT);startRename(tab);});
+  tab.addEventListener('dblclick',e=>{clearTimeout(clickT);if(tab.dataset.p!=='summary')startRename(tab);});
 });
 document.getElementById('prev').onclick=()=>{view.setMonth(view.getMonth()-1);render();};
 document.getElementById('next').onclick=()=>{view.setMonth(view.getMonth()+1);render();};
@@ -781,24 +874,39 @@ document.getElementById('today-btn').onclick=()=>{view=new Date();view.setDate(1
 function buildMonthSummary(){
   const y=view.getFullYear(),m=view.getMonth(),pre=`${y}-${pad(m+1)}-`;
   const brk=state.settings?.breakMin||0;
-  const pay=state.profiles[active].pay;
-  let cnt=0,paidMins=0,earn=0,verified=0;
-  Object.keys(state.shifts[active]||{}).sort().forEach(k=>{
-    if(k.startsWith(pre)){
-      const l=state.shifts[active][k],isHoliday=!!state.holidays[k];
-      cnt+=l.length;
-      l.forEach(s=>{
-        const r=computeShiftPay(pay,brk,s.s,s.e,isHoliday);
-        paidMins+=r.paidMin;earn+=r.pay;
-        if(s.v)verified++;
-      });
-    }
-  });
+  function summarizeProfile(p){
+    const pay=state.profiles[p].pay;
+    let cnt=0,paidMins=0,earn=0,verified=0;
+    Object.keys(state.shifts[p]||{}).sort().forEach(k=>{
+      if(k.startsWith(pre)){
+        const l=state.shifts[p][k],isHoliday=!!state.holidays[k];
+        cnt+=l.length;
+        l.forEach(s=>{
+          const r=computeShiftPay(pay,brk,s.s,s.e,isHoliday);
+          paidMins+=r.paidMin;earn+=r.pay;
+          if(s.v)verified++;
+        });
+      }
+    });
+    return {cnt,paidMins,earn,verified};
+  }
   const f=n=>Math.round(n).toLocaleString('hu-HU');
+  if(active==='summary'){
+    const r1=summarizeProfile('p1'), r2=summarizeProfile('p2');
+    const {haviBenzinElszamolas,kozosNapokSzama}=computeGasMonthly();
+    const cnt=r1.cnt+r2.cnt;
+    let text=`${HU_MONTHS[m]} ${y} · Összesítő\n`
+      +`${state.profiles.p1.name}: ${r1.cnt} műszak · ${fmtH(r1.paidMins)} óra · ${f(r1.earn)} Ft\n`
+      +`${state.profiles.p2.name}: ${r2.cnt} műszak · ${fmtH(r2.paidMins)} óra · ${f(r2.earn)} Ft\n`
+      +`Összesen: ${cnt} műszak · ${f(r1.earn+r2.earn)} Ft`;
+    if(kozosNapokSzama>0) text+=`\nBenzin elszámolás: ${kozosNapokSzama} közös nap · ${f(haviBenzinElszamolas)} Ft (${state.profiles.p1.name} → ${state.profiles.p2.name})`;
+    return {text,cnt,earn:r1.earn+r2.earn};
+  }
+  const r=summarizeProfile(active);
   const name=state.profiles[active].name;
-  let text=`${HU_MONTHS[m]} ${y} · ${name}\n${cnt} műszak · ${fmtH(paidMins)} óra\n≈ ${f(earn)} Ft`;
-  if(cnt>0) text+=`\nIgazolva: ${verified}/${cnt} műszak`;
-  return {text,cnt,earn};
+  let text=`${HU_MONTHS[m]} ${y} · ${name}\n${r.cnt} műszak · ${fmtH(r.paidMins)} óra\n≈ ${f(r.earn)} Ft`;
+  if(r.cnt>0) text+=`\nIgazolva: ${r.verified}/${r.cnt} műszak`;
+  return {text,cnt:r.cnt,earn:r.earn};
 }
 function showToast(msg){
   const t=document.getElementById('toast');
