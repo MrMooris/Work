@@ -22,11 +22,14 @@
   html,body{height:100%}
   body{
     background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(245,166,35,.06), transparent 60%),
+      linear-gradient(to bottom, var(--top-glow,rgba(245,166,35,.10)), transparent 320px),
       radial-gradient(900px 500px at -10% 110%, rgba(62,201,192,.05), transparent 55%),
       var(--bg);
+    background-attachment:fixed,fixed,scroll;
+    background-repeat:no-repeat,no-repeat,repeat;
     color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100%;
     -webkit-font-smoothing:antialiased;line-height:1.4;
+    transition:background .25s;
   }
   .wrap{max-width:var(--wrap-max);margin:0 auto;padding:22px 18px 40px}
 
@@ -773,21 +776,24 @@ function refreshProfileUI(){
   document.getElementById('nm-p2').textContent=state.profiles.p2.name;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.p===active));
   const app=document.getElementById('app');
+  const root=document.documentElement;
   const isSummary=active==='summary';
   if(isSummary){
     document.getElementById('who').textContent='Összesítő';
     document.getElementById('who').style.color='var(--sum,#b98cf0)';
     document.querySelector('.stat .value.accent').style.color='var(--sum,#b98cf0)';
-    app.style.setProperty('--sel','#b98cf0');
-    app.style.setProperty('--sel-soft','rgba(185,140,240,.14)');
-    app.style.setProperty('--we-tint','rgba(185,140,240,.045)');
+    root.style.setProperty('--sel','#b98cf0');
+    root.style.setProperty('--sel-soft','rgba(185,140,240,.14)');
+    root.style.setProperty('--we-tint','rgba(185,140,240,.045)');
+    root.style.setProperty('--top-glow','rgba(185,140,240,.10)');
   }else{
     document.getElementById('who').textContent=state.profiles[active].name;
     document.getElementById('who').style.color=active==='p1'?'var(--amber)':'var(--teal)';
     document.querySelector('.stat .value.accent').style.color=active==='p1'?'var(--amber)':'var(--teal)';
-    app.style.setProperty('--sel', active==='p1'?'#f5a623':'#3ec9c0');
-    app.style.setProperty('--sel-soft', active==='p1'?'rgba(245,166,35,.14)':'rgba(62,201,192,.15)');
-    app.style.setProperty('--we-tint', active==='p1'?'rgba(245,166,35,.045)':'rgba(62,201,192,.045)');
+    root.style.setProperty('--sel', active==='p1'?'#f5a623':'#3ec9c0');
+    root.style.setProperty('--sel-soft', active==='p1'?'rgba(245,166,35,.14)':'rgba(62,201,192,.15)');
+    root.style.setProperty('--we-tint', active==='p1'?'rgba(245,166,35,.045)':'rgba(62,201,192,.045)');
+    root.style.setProperty('--top-glow', active==='p1'?'rgba(245,166,35,.10)':'rgba(62,201,192,.09)');
     const pay=state.profiles[active].pay||{};
     document.getElementById('pay-base').value=(pay.base!=null?pay.base:'');
     document.getElementById('pay-du').value=(pay.duPct!=null?pay.duPct:'');
