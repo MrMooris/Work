@@ -1216,7 +1216,16 @@ function clearSessionStorage(){ try{ localStorage.removeItem(SESSION_KEY); }catc
 
 function applySession(){
   if(session){
-    // ha időközben átnevezték a profilt, kövesse a nevet (role marad, csak a megjelenítés friss)
+    // a szerepet mindig a NÉVBŐL számoljuk újra (nem a régen elmentett role-t bízzuk el),
+    // így ha korábban hibásan mentődött (pl. régi kód miatt), automatikusan magától javul
+    const lower=(session.name||'').trim().toLowerCase();
+    const p1n=(state.profiles.p1.name||'').trim().toLowerCase();
+    const p2n=(state.profiles.p2.name||'').trim().toLowerCase();
+    let role='viewer';
+    if(LOGIN_ALIASES[lower]) role=LOGIN_ALIASES[lower];
+    else if(lower===p1n) role='p1';
+    else if(lower===p2n) role='p2';
+    if(role!==session.role){ session.role=role; saveSession(session); }
     readOnly = session.role==='viewer';
     active = readOnly ? 'summary' : session.role;
   }else{
