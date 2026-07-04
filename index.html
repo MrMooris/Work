@@ -27,7 +27,7 @@
     color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100%;
     -webkit-font-smoothing:antialiased;line-height:1.4;
   }
-  .wrap{max-width:1040px;margin:0 auto;padding:22px 18px 60px}
+  .wrap{max-width:1040px;margin:0 auto;padding:22px 18px 90px}
 
   /* ---- Profile tabs ---- */
   .tabs{display:flex;gap:8px;margin-bottom:18px}
@@ -240,6 +240,75 @@
   .stat .value.pos{color:var(--green)}
   .loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:99;color:var(--text-dim);font-size:14px}
 
+  /* ---- Bejelentkező sáv ---- */
+  .login-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:70;
+    background:rgba(18,20,29,.92);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line-soft);
+    padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+  }
+  .login-form{max-width:1040px;margin:0 auto;display:flex;gap:10px}
+  .login-form input{
+    flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:11px 14px;color:var(--text);font-family:inherit;font-size:14px;
+  }
+  .login-form input::placeholder{color:var(--text-faint)}
+  .login-form input:focus{outline:none;border-color:var(--amber-line)}
+  .login-btn{
+    height:42px;padding:0 18px;border-radius:10px;background:var(--amber);color:#1a1304;
+    font-weight:600;font-size:13.5px;cursor:pointer;transition:.15s;flex:none;
+  }
+  .login-btn:hover{background:#ffb43a}
+  .login-status{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .login-who{display:flex;align-items:center;gap:9px;min-width:0;flex:none}
+  .login-dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--sel,var(--amber))}
+  .login-dot.viewer{background:var(--sum,#b98cf0)}
+  .login-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .login-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px}
+  .login-sync{font-size:11px;color:var(--green);font-weight:500}
+  .login-sync.viewer{color:var(--sum,#b98cf0)}
+  .chat-toggle{
+    width:38px;height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text-dim);font-size:15px;cursor:pointer;transition:.15s;flex:none;display:grid;place-items:center;
+  }
+  .chat-toggle:hover{background:var(--surface-2);color:var(--text)}
+  .chat-toggle.on{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber)}
+  #chat-input{
+    flex:1;min-width:110px;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:9px 13px;color:var(--text);font-family:inherit;font-size:13.5px;
+  }
+  #chat-input::placeholder{color:var(--text-faint)}
+  #chat-input:focus{outline:none;border-color:var(--amber-line)}
+  .chat-send{
+    width:38px;height:38px;border-radius:10px;background:var(--amber);color:#1a1304;
+    font-size:15px;cursor:pointer;transition:.15s;flex:none;display:grid;place-items:center;
+  }
+  .chat-send:hover{background:#ffb43a}
+  .login-out{
+    height:38px;padding:0 13px;border-radius:9px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text-dim);font-size:12.5px;font-weight:500;cursor:pointer;transition:.15s;flex:none;
+  }
+  .login-out:hover{background:var(--surface-2);color:var(--text);border-color:var(--line-soft)}
+  .viewonly-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--text-faint);background:var(--surface);border:1px solid var(--line-soft);border-radius:7px;padding:3px 9px;margin-left:8px;vertical-align:middle}
+
+  /* ---- Chat üzenetlista ---- */
+  .chat-log{
+    display:none;max-width:1040px;margin:0 auto 10px;max-height:38vh;overflow-y:auto;
+    flex-direction:column;gap:6px;padding:2px 2px 4px;
+  }
+  .chat-log.open{display:flex}
+  .chat-empty{font-size:12.5px;color:var(--text-faint);text-align:center;padding:14px 0}
+  .chat-msg{
+    display:flex;align-items:baseline;gap:8px;background:var(--surface);border:1px solid var(--line-soft);
+    border-radius:9px;padding:7px 11px;font-size:12.5px;
+  }
+  .chat-msg .cn{font-weight:600;font-family:'Space Grotesk',sans-serif;flex:none;white-space:nowrap}
+  .chat-msg.p1 .cn{color:var(--amber)}
+  .chat-msg.p2 .cn{color:var(--teal)}
+  .chat-msg.viewer .cn{color:var(--sum,#b98cf0)}
+  .chat-msg .ct{color:var(--text);flex:1;min-width:0;word-break:break-word}
+  .chat-msg .cts{color:var(--text-faint);font-size:10.5px;flex:none;font-variant-numeric:tabular-nums}
+
   @media(max-width:560px){
     .wrap{padding:16px 12px 50px}
     .cell{min-height:80px;padding:5px 4px 6px}
@@ -256,6 +325,8 @@
     .selbar{gap:8px}
     .travel-row .rl{min-width:0;width:100%}
     .travel-row input[type=text]{width:100%}
+    .login-name{max-width:64px}
+    .chat-log{max-height:32vh}
   }
 </style>
 </head>
@@ -265,8 +336,8 @@
 <div class="wrap" id="app" style="display:none">
 
   <div class="tabs" id="tabs">
-    <div class="tab active" data-p="p1"><span class="dot"></span><span class="nm" id="nm-p1">1. fő</span><span class="hr" id="hr-p1"></span></div>
-    <div class="tab" data-p="p2"><span class="dot"></span><span class="nm" id="nm-p2">2. fő</span><span class="hr" id="hr-p2"></span></div>
+    <div class="tab active" data-p="p1"><span class="dot"></span><span class="nm" id="nm-p1">Mooris</span><span class="hr" id="hr-p1"></span></div>
+    <div class="tab" data-p="p2"><span class="dot"></span><span class="nm" id="nm-p2">Grim</span><span class="hr" id="hr-p2"></span></div>
     <div class="tab" data-p="summary"><span class="dot"></span><span class="nm">Összesítő</span></div>
   </div>
 
@@ -401,6 +472,28 @@
   </div>
 </div>
 
+<!-- Bejelentkező sáv -->
+<div class="login-bar" id="login-bar">
+  <div class="chat-log" id="chat-log"></div>
+  <form class="login-form" id="login-form">
+    <input type="text" id="login-input" placeholder="Írd be a neved a csatlakozáshoz…" maxlength="24" autocomplete="off">
+    <button type="submit" class="login-btn">Csatlakozás</button>
+  </form>
+  <div class="login-status" id="login-status" style="display:none">
+    <button class="chat-toggle" id="chat-toggle" title="Üzenetek">💬</button>
+    <div class="login-who">
+      <span class="login-dot" id="login-dot"></span>
+      <div class="login-txt">
+        <span class="login-name" id="login-name"></span>
+        <span class="login-sync" id="login-sync"></span>
+      </div>
+    </div>
+    <input type="text" id="chat-input" placeholder="Írj üzenetet…" maxlength="300" autocomplete="off">
+    <button class="chat-send" id="chat-send" title="Küldés">➤</button>
+    <button class="login-out" id="login-out">Ki</button>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    FIREBASE BEÁLLÍTÁS
@@ -424,13 +517,16 @@ const HU_DOW_SHORT=['H','K','Sze','Cs','P','Szo','V'];
 const LOCAL_KEY='moori-munkanaptar-2fo-v1';
 
 let state={
-  profiles:{ p1:{name:'1. fő',rates:null}, p2:{name:'2. fő',rates:null} },
+  profiles:{ p1:{name:'Mooris',rates:null}, p2:{name:'Grim',rates:null} },
   shifts:{ p1:{}, p2:{} },   // { 'YYYY-MM-DD':[{s,e,p,v}] } · v = koordinátor által igazolva
   settings:{ breakMin:30 },  // munkaközi szünet, globálisan mindkét profilra
   holidays:{},               // { 'YYYY-MM-DD': true } · piros betűs ünnepnap (+100%)
-  travel:{ bus:{de:'',du:'',ej:''}, fuelPrice:612, consumption:7.0 }   // közös: buszindulások + automatikus benzinelszámolás
+  travel:{ bus:{de:'',du:'',ej:''}, fuelPrice:612, consumption:7.0 },  // közös: buszindulások + automatikus benzinelszámolás
+  chat:{}   // { id: {name,role,text,ts} } · közös üzenetfal, bárki írhat aki bejelentkezett
 };
 let active='p1';
+let readOnly=false;   // "csak megtekintés" felhasználó (nem p1/p2 néven jelentkezett be)
+let session=null;     // {name, role:'p1'|'p2'|'viewer'} · eszköz-szinten megjegyezve
 let view=new Date(); view.setDate(1);
 let openDateKey=null;
 let modalProfile='p1'; // Összesítő módban ez választja ki, melyik fő beosztását szerkeszted a modalban
@@ -515,16 +611,17 @@ async function initStore(){
       db.ref(ROOT).on('value',snap=>{
         const v=snap.val()||{};
         suppressWrite=true;
-        state.profiles.p1={name:(v.profiles?.p1?.name)||'1. fő',pay:(v.profiles?.p1?.pay)||null};
-        state.profiles.p2={name:(v.profiles?.p2?.name)||'2. fő',pay:(v.profiles?.p2?.pay)||null};
+        state.profiles.p1={name:(v.profiles?.p1?.name)||'Mooris',pay:(v.profiles?.p1?.pay)||null};
+        state.profiles.p2={name:(v.profiles?.p2?.name)||'Grim',pay:(v.profiles?.p2?.pay)||null};
         normalizePay();
         state.shifts.p1=(v.shifts?.p1)||{};
         state.shifts.p2=(v.shifts?.p2)||{};
         state.settings={ breakMin:(v.settings?.breakMin!=null? v.settings.breakMin:30) };
         state.holidays=v.holidays||{};
         state.travel={ bus:(v.travel?.bus)||{de:'',du:'',ej:''}, fuelPrice:(v.travel?.fuelPrice!=null?v.travel.fuelPrice:612), consumption:(v.travel?.consumption!=null?v.travel.consumption:7.0) };
+        state.chat=v.chat||{};
         suppressWrite=false;
-        refreshProfileUI(); render(); refreshBusInputs(); renderBusHint(); refreshGasInputs(); renderTotals();
+        refreshProfileUI(); render(); refreshBusInputs(); renderBusHint(); refreshGasInputs(); renderTotals(); renderChatLog();
       });
       return;
     }catch(e){ console.warn('Firebase nem elérhető, helyi mentés lesz.',e); useFirebase=false; }
@@ -538,12 +635,12 @@ async function initStore(){
 
 let saveTimer=null;
 function persistProfile(p){
-  if(suppressWrite) return;
+  if(suppressWrite||readOnly) return;
   if(useFirebase){ db.ref(`${ROOT}/profiles/${p}`).update(state.profiles[p]); }
   else persistLocal();
 }
 function persistDay(p,key){
-  if(suppressWrite) return;
+  if(suppressWrite||readOnly) return;
   if(useFirebase){
     const list=shiftsFor(p,key);
     db.ref(`${ROOT}/shifts/${p}/${key}`).set(list.length?list:null);
@@ -554,22 +651,22 @@ function persistLocal(){
   saveTimer=setTimeout(async()=>{try{await window.storage.set(LOCAL_KEY,JSON.stringify(state));}catch(e){console.error(e);}},200);
 }
 function persistSettings(){
-  if(suppressWrite) return;
+  if(suppressWrite||readOnly) return;
   if(useFirebase){ db.ref(`${ROOT}/settings`).update(state.settings); }
   else persistLocal();
 }
 function persistHoliday(key){
-  if(suppressWrite) return;
+  if(suppressWrite||readOnly) return;
   if(useFirebase){ db.ref(`${ROOT}/holidays/${key}`).set(state.holidays[key]?true:null); }
   else persistLocal();
 }
 function persistBus(){
-  if(suppressWrite) return;
+  if(suppressWrite||readOnly) return;
   if(useFirebase){ db.ref(`${ROOT}/travel/bus`).set(state.travel.bus); }
   else persistLocal();
 }
 function persistGasSettings(){
-  if(suppressWrite) return;
+  if(suppressWrite||readOnly) return;
   if(useFirebase){ db.ref(`${ROOT}/travel`).update({fuelPrice:state.travel.fuelPrice,consumption:state.travel.consumption}); }
   else persistLocal();
 }
@@ -664,6 +761,7 @@ function render(){
       const sm=document.createElement('div');sm.className='selmark';sm.textContent='✓';cell.appendChild(sm);
       if(selected.has(key))cell.classList.add('sel');
       cell.addEventListener('click',()=>{
+        if(readOnly){ showToast('Csak megtekintés — jelentkezz be 1. vagy 2. főként a szerkesztéshez.'); return; }
         if(selectMode){
           if(selected.has(key)){selected.delete(key);cell.classList.remove('sel');}
           else{selected.add(key);cell.classList.add('sel');}
@@ -1065,6 +1163,110 @@ document.getElementById('pay-break').addEventListener('change',()=>{
 });
 function renderModalListIfOpen(){ if(openDateKey && document.getElementById('scrim').classList.contains('open')) renderModalList(); }
 
+/* ---------- bejelentkezés / szinkron-session ---------- */
+const SESSION_KEY='mn_session';
+function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch(e){ return null; } }
+function saveSession(s){ try{ localStorage.setItem(SESSION_KEY,JSON.stringify(s)); }catch(e){} }
+function clearSessionStorage(){ try{ localStorage.removeItem(SESSION_KEY); }catch(e){} }
+
+function applySession(){
+  if(session){
+    // ha időközben átnevezték a profilt, kövesse a nevet (role marad, csak a megjelenítés friss)
+    readOnly = session.role==='viewer';
+    active = readOnly ? 'summary' : session.role;
+  }else{
+    readOnly=false;
+  }
+  document.querySelector('.tab[data-p="p1"]').style.display = readOnly?'none':'';
+  document.querySelector('.tab[data-p="p2"]').style.display = readOnly?'none':'';
+  document.getElementById('gas-price').disabled = readOnly;
+  document.getElementById('gas-cons').disabled = readOnly;
+  document.getElementById('bus-de').disabled = readOnly;
+  document.getElementById('bus-du').disabled = readOnly;
+  document.getElementById('bus-ej').disabled = readOnly;
+  renderLoginBar();
+}
+function renderLoginBar(){
+  const form=document.getElementById('login-form'), status=document.getElementById('login-status');
+  if(session){
+    form.style.display='none'; status.style.display='flex';
+    document.getElementById('login-name').textContent=session.name;
+    document.getElementById('login-dot').className='login-dot'+(readOnly?' viewer':'');
+    const syncEl=document.getElementById('login-sync');
+    if(readOnly){ syncEl.className='login-sync viewer'; syncEl.innerHTML='👁 Csak megtekintés'; }
+    else{ syncEl.className='login-sync'; syncEl.innerHTML='Szinkronizálva ✓'; }
+  }else{
+    form.style.display='flex'; status.style.display='none';
+  }
+}
+document.getElementById('login-form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const input=document.getElementById('login-input');
+  const name=input.value.trim();
+  if(!name)return;
+  const p1n=(state.profiles.p1.name||'').trim().toLowerCase();
+  const p2n=(state.profiles.p2.name||'').trim().toLowerCase();
+  const lower=name.toLowerCase();
+  let role='viewer';
+  if(lower===p1n) role='p1';
+  else if(lower===p2n) role='p2';
+  session={name,role};
+  saveSession(session);
+  input.value='';
+  applySession();
+  refreshProfileUI();render();
+  showToast(role==='viewer' ? `Szia ${name}! Csak megtekintő módban léptél be.` : `Szia ${name}! Szinkronizálva.`);
+});
+document.getElementById('login-out').addEventListener('click',()=>{
+  session=null;
+  clearSessionStorage();
+  readOnly=false;
+  active='p1';
+  applySession();
+  refreshProfileUI();render();
+});
+
+/* ---------- chat ---------- */
+let chatLogOpen=false;
+function persistChat(id,msg){
+  if(useFirebase){ db.ref(`${ROOT}/chat/${id}`).set(msg); }
+  else{ if(!state.chat)state.chat={}; state.chat[id]=msg; persistLocal(); renderChatLog(); }
+}
+function sendChatMessage(){
+  if(!session)return;
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text)return;
+  const id=(useFirebase? 'm'+Date.now()+Math.floor(Math.random()*1000) : 'm'+Date.now());
+  const msg={name:session.name,role:session.role,text,ts:Date.now()};
+  persistChat(id,msg);
+  input.value='';
+}
+function renderChatLog(){
+  const box=document.getElementById('chat-log');
+  const entries=Object.values(state.chat||{}).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(!entries.length){ box.innerHTML='<div class="chat-empty">Még nincs üzenet — írj elsőnek!</div>'; return; }
+  const wasAtBottom = box.scrollTop+box.clientHeight >= box.scrollHeight-20;
+  box.innerHTML='';
+  entries.forEach(m=>{
+    const row=document.createElement('div');row.className='chat-msg '+(m.role||'viewer');
+    const t=new Date(m.ts||Date.now());
+    const time=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    row.innerHTML=`<span class="cn">${escapeHtml(m.name||'?')}</span><span class="ct">${escapeHtml(m.text||'')}</span><span class="cts">${time}</span>`;
+    box.appendChild(row);
+  });
+  if(wasAtBottom || chatLogOpen===false) box.scrollTop=box.scrollHeight;
+}
+document.getElementById('chat-toggle').addEventListener('click',()=>{
+  chatLogOpen=!chatLogOpen;
+  const box=document.getElementById('chat-log');
+  box.classList.toggle('open',chatLogOpen);
+  document.getElementById('chat-toggle').classList.toggle('on',chatLogOpen);
+  if(chatLogOpen) box.scrollTop=box.scrollHeight;
+});
+document.getElementById('chat-send').addEventListener('click',sendChatMessage);
+document.getElementById('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendChatMessage(); } });
+
 /* ---------- init ---------- */
 (async()=>{
   await initStore();
@@ -1072,8 +1274,10 @@ function renderModalListIfOpen(){ if(openDateKey && document.getElementById('scr
   const sync=document.getElementById('sync');
   if(useFirebase){sync.classList.add('on');document.getElementById('sync-text').textContent='Firebase szinkron';}
   else{sync.style.display='none';}
+  session=loadSession();
+  applySession();
   refreshProfileUI();renderWeekdays();render();
-  refreshBusInputs();renderBusHint();refreshGasInputs();renderTotals();
+  refreshBusInputs();renderBusHint();refreshGasInputs();renderTotals();renderChatLog();
   document.getElementById('loading').style.display='none';
   document.getElementById('app').style.display='';
 })();
