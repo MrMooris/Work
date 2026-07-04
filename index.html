@@ -16,6 +16,7 @@
     --teal:#3ec9c0;--teal-soft:rgba(62,201,192,.15);--teal-line:rgba(62,201,192,.42);
     --green:#43c97a;
     --radius:14px;--radius-sm:9px;
+    --wrap-max:1040px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -27,7 +28,7 @@
     color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100%;
     -webkit-font-smoothing:antialiased;line-height:1.4;
   }
-  .wrap{max-width:1040px;margin:0 auto;padding:22px 18px 90px}
+  .wrap{max-width:var(--wrap-max);margin:0 auto;padding:22px 18px 40px}
 
   /* ---- Profile tabs ---- */
   .tabs{display:flex;gap:8px;margin-bottom:18px}
@@ -60,8 +61,8 @@
   .title .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);font-weight:600}
   .title h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(21px,4vw,28px);letter-spacing:-.01em}
   .title h1 .who{color:var(--amber)}
-  .totals{display:flex;gap:10px;flex-wrap:wrap}
-  .stat{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:11px 16px;min-width:104px}
+  .totals{display:flex;flex-wrap:wrap;gap:10px}
+  .stat{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:11px 16px;flex:1 1 118px;min-width:104px}
   .stat .label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:3px}
   .stat .value{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
   .stat .value.accent{color:var(--amber)}
@@ -69,7 +70,8 @@
 
   /* ---- Összesítő: külön pénz/idő kártyák ---- */
   .summary-stats{display:none;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-  .ss-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:13px 16px;min-width:170px;flex:1}
+  .ss-gas{flex:1 1 100%}
+  .ss-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:13px 16px;flex:1 1 200px;min-width:170px}
   .ss-card.p1{border-color:var(--amber-line)}
   .ss-card.p2{border-color:var(--teal-line)}
   .ss-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;margin-bottom:9px}
@@ -81,10 +83,10 @@
   .ss-gas b{font-family:'Space Grotesk',sans-serif;color:var(--text);font-weight:600}
 
   /* ---- Month nav ---- */
-  .navbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-  .month-label{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;letter-spacing:-.01em;min-width:150px}
+  .navbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;row-gap:10px}
+  .month-label{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;letter-spacing:-.01em;min-width:0;white-space:nowrap;flex:none}
   .month-label .yr{color:var(--text-dim);font-weight:500;margin-left:6px}
-  .navbtns{display:flex;gap:6px;margin-left:auto}
+  .navbtns{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
   button{font-family:inherit;cursor:pointer;color:inherit;border:none;background:none}
   .icon-btn{width:38px;height:38px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-soft);color:var(--text-dim);font-size:16px;display:grid;place-items:center;transition:.15s}
   .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--line)}
@@ -253,84 +255,109 @@
   .stat .value.pos{color:var(--green)}
   .loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:99;color:var(--text-dim);font-size:14px}
 
-  /* ---- Bejelentkező sáv ---- */
-  .login-bar{
-    position:fixed;left:0;right:0;bottom:0;z-index:70;
-    background:rgba(18,20,29,.92);backdrop-filter:blur(10px);
-    border-top:1px solid var(--line-soft);
-    padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+  /* ---- Chat buborék (lebegő gomb) ---- */
+  .chat-bubble{
+    position:fixed;right:20px;bottom:20px;z-index:75;
+    width:58px;height:58px;border-radius:50%;
+    background:var(--amber);color:#1a1304;font-size:24px;
+    display:grid;place-items:center;cursor:pointer;
+    box-shadow:0 10px 28px rgba(0,0,0,.4);transition:transform .18s,background .15s;
+    border:none;
   }
-  .login-form{max-width:1040px;margin:0 auto;display:flex;gap:10px}
-  .login-form input{
-    flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;
-    padding:11px 14px;color:var(--text);font-family:inherit;font-size:14px;
+  .chat-bubble:hover{background:#ffb43a;transform:scale(1.06)}
+  .chat-bubble.open{background:var(--surface-2);color:var(--text)}
+  .bubble-dot{
+    position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;
+    background:#e5484d;border:2px solid var(--bg);
   }
-  .login-form input::placeholder{color:var(--text-faint)}
-  .login-form input:focus{outline:none;border-color:var(--amber-line)}
+
+  /* ---- Chat ablak (Messenger-szerű felugró panel) ---- */
+  .chat-window{
+    position:fixed;right:20px;bottom:90px;z-index:74;
+    width:360px;max-width:calc(100vw - 32px);height:520px;max-height:calc(100vh - 130px);
+    background:var(--surface);border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+    display:flex;flex-direction:column;overflow:hidden;
+    transform-origin:bottom right;transform:scale(.92) translateY(12px);opacity:0;
+    pointer-events:none;transition:transform .18s ease,opacity .15s ease;
+  }
+  .chat-window.open{transform:scale(1) translateY(0);opacity:1;pointer-events:auto}
+  .cw-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--line-soft);flex:none;
+  }
+  .cw-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px}
+  .cw-close{width:28px;height:28px;border-radius:8px;background:var(--surface-2);color:var(--text-dim);font-size:17px;display:grid;place-items:center;transition:.15s;flex:none}
+  .cw-close:hover{color:var(--text);background:var(--line)}
+
+  .cw-login{padding:18px 16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+  .cw-login p{font-size:12.5px;color:var(--text-dim);line-height:1.5}
+  .cw-login-row{display:flex;gap:8px}
+  .cw-login-row input{
+    flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 13px;color:var(--text);font-family:inherit;font-size:13.5px;
+  }
+  .cw-login-row input::placeholder{color:var(--text-faint)}
+  .cw-login-row input:focus{outline:none;border-color:var(--amber-line)}
   .login-btn{
-    height:42px;padding:0 18px;border-radius:10px;background:var(--amber);color:#1a1304;
-    font-weight:600;font-size:13.5px;cursor:pointer;transition:.15s;flex:none;
+    height:40px;padding:0 16px;border-radius:10px;background:var(--amber);color:#1a1304;
+    font-weight:600;font-size:13px;cursor:pointer;transition:.15s;flex:none;
   }
   .login-btn:hover{background:#ffb43a}
-  .login-status{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-  .login-who{display:flex;align-items:center;gap:9px;min-width:0;flex:none}
-  .login-dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--sel,var(--amber))}
-  .login-dot.viewer{background:var(--sum,#b98cf0)}
-  .login-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
-  .login-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px}
-  .login-sync{font-size:11px;color:var(--green);font-weight:500}
-  .login-sync.viewer{color:var(--sum,#b98cf0)}
-  .chat-toggle{
-    width:38px;height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--line);
-    color:var(--text-dim);font-size:15px;cursor:pointer;transition:.15s;flex:none;display:grid;place-items:center;
+
+  .cw-body{display:flex;flex-direction:column;flex:1;min-height:0}
+  .cw-identity{
+    display:flex;align-items:center;gap:8px;padding:10px 14px;
+    border-bottom:1px solid var(--line-soft);flex:none;
   }
-  .chat-toggle:hover{background:var(--surface-2);color:var(--text)}
-  .chat-toggle.on{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber)}
+  .login-dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--sel,var(--amber))}
+  .login-dot.viewer{background:var(--sum,#b98cf0)}
+  .login-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px}
+  .login-sync{font-size:11px;color:var(--green);font-weight:500;flex:1;min-width:0}
+  .login-sync.viewer{color:var(--sum,#b98cf0)}
+  .login-out{
+    height:28px;padding:0 11px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);
+    color:var(--text-dim);font-size:11.5px;font-weight:500;cursor:pointer;transition:.15s;flex:none;
+  }
+  .login-out:hover{background:var(--surface-2);color:var(--text);border-color:var(--line-soft)}
+
+  /* ---- Üzenetlista, Messenger-buborékok ---- */
+  .cw-messages{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-height:0}
+  .chat-empty{font-size:12.5px;color:var(--text-faint);text-align:center;padding:20px 0;margin:auto 0}
+  .chat-msg{display:flex;flex-direction:column;max-width:78%;gap:2px}
+  .chat-msg.own{align-self:flex-end;align-items:flex-end}
+  .chat-msg.other{align-self:flex-start;align-items:flex-start}
+  .chat-msg .sender{font-size:10.5px;font-weight:600;padding:0 3px}
+  .chat-msg.p1 .sender{color:var(--amber)}
+  .chat-msg.p2 .sender{color:var(--teal)}
+  .chat-msg.viewer .sender{color:var(--sum,#b98cf0)}
+  .chat-msg .bubble{padding:8px 13px;border-radius:16px;font-size:13px;line-height:1.4;word-break:break-word}
+  .chat-msg.own .bubble{background:var(--amber);color:#1a1304;border-bottom-right-radius:5px}
+  .chat-msg.other .bubble{background:var(--bg-2);color:var(--text);border:1px solid var(--line-soft);border-bottom-left-radius:5px}
+  .chat-msg .cts{font-size:9.5px;color:var(--text-faint);padding:0 3px;font-variant-numeric:tabular-nums}
+
+  .cw-input-row{display:flex;align-items:center;gap:8px;padding:11px 14px;border-top:1px solid var(--line-soft);flex:none}
   #chat-input{
-    flex:1;min-width:110px;background:var(--surface);border:1px solid var(--line);border-radius:10px;
-    padding:9px 13px;color:var(--text);font-family:inherit;font-size:13.5px;
+    flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line);border-radius:20px;
+    padding:9px 15px;color:var(--text);font-family:inherit;font-size:13.5px;
   }
   #chat-input::placeholder{color:var(--text-faint)}
   #chat-input:focus{outline:none;border-color:var(--amber-line)}
   .chat-send{
-    width:38px;height:38px;border-radius:10px;background:var(--amber);color:#1a1304;
+    width:36px;height:36px;border-radius:50%;background:var(--amber);color:#1a1304;
     font-size:15px;cursor:pointer;transition:.15s;flex:none;display:grid;place-items:center;
   }
   .chat-send:hover{background:#ffb43a}
-  .login-out{
-    height:38px;padding:0 13px;border-radius:9px;background:var(--surface);border:1px solid var(--line);
-    color:var(--text-dim);font-size:12.5px;font-weight:500;cursor:pointer;transition:.15s;flex:none;
-  }
-  .login-out:hover{background:var(--surface-2);color:var(--text);border-color:var(--line-soft)}
-  .viewonly-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--text-faint);background:var(--surface);border:1px solid var(--line-soft);border-radius:7px;padding:3px 9px;margin-left:8px;vertical-align:middle}
-
-  /* ---- Chat üzenetlista ---- */
-  .chat-log{
-    display:none;max-width:1040px;margin:0 auto 10px;max-height:38vh;overflow-y:auto;
-    flex-direction:column;gap:6px;padding:2px 2px 4px;
-  }
-  .chat-log.open{display:flex}
-  .chat-empty{font-size:12.5px;color:var(--text-faint);text-align:center;padding:14px 0}
-  .chat-msg{
-    display:flex;align-items:baseline;gap:8px;background:var(--surface);border:1px solid var(--line-soft);
-    border-radius:9px;padding:7px 11px;font-size:12.5px;
-  }
-  .chat-msg .cn{font-weight:600;font-family:'Space Grotesk',sans-serif;flex:none;white-space:nowrap}
-  .chat-msg.p1 .cn{color:var(--amber)}
-  .chat-msg.p2 .cn{color:var(--teal)}
-  .chat-msg.viewer .cn{color:var(--sum,#b98cf0)}
-  .chat-msg .ct{color:var(--text);flex:1;min-width:0;word-break:break-word}
-  .chat-msg .cts{color:var(--text-faint);font-size:10.5px;flex:none;font-variant-numeric:tabular-nums}
 
   @media(max-width:560px){
-    .wrap{padding:16px 12px 50px}
+    .wrap{padding:16px 12px 30px}
     .cell{min-height:80px;padding:5px 4px 6px}
     .chip{font-size:10px;padding:2px 5px}
     .chip .pl{display:none}
     .daynum{font-size:13px;width:23px;height:23px}
     .weekdays div{font-size:10px;padding:9px 2px}
     .fields{grid-template-columns:1fr}
-    .stat{min-width:0;flex:1;padding:9px 12px}.stat .value{font-size:19px}
+    .stat{padding:9px 12px}.stat .value{font-size:19px}
     .tab{padding:10px}.tab .hr{display:none}
     .modal{max-width:none;border-radius:18px 18px 0 0;max-height:90vh}
     .scrim{padding:0;align-items:flex-end}
@@ -338,8 +365,35 @@
     .selbar{gap:8px}
     .travel-row .rl{min-width:0;width:100%}
     .travel-row input[type=text]{width:100%}
-    .login-name{max-width:64px}
-    .chat-log{max-height:32vh}
+    .login-name{max-width:80px}
+    .chat-window{right:10px;left:10px;bottom:82px;width:auto;max-width:none;height:min(68vh,520px)}
+    .chat-bubble{right:16px;bottom:16px}
+    .stat{flex-basis:calc(50% - 5px)}
+    .summary-stats .ss-card{flex-basis:100%}
+    .modal-body{padding:14px 16px 18px}
+    .modal-head{padding:16px 16px 12px}
+  }
+
+  /* ---- Tablet (561–899px): köztes méretezés minden elemre ---- */
+  @media(min-width:561px) and (max-width:899px){
+    .wrap{padding:20px 22px 40px}
+    .cell{min-height:92px}
+    .stat{flex-basis:118px;padding:10px 12px}
+    .stat .value{font-size:20px}
+    .summary-stats .ss-card{flex-basis:calc(50% - 6px)}
+    .tab{padding:10px 12px}
+    .month-label{font-size:17px}
+    .modal{max-width:460px}
+    .login-name{max-width:130px}
+  }
+
+  /* ---- Nagy desktop (1400px+): kicsit szélesebb tartalom, ne vesszen el a hely ---- */
+  @media(min-width:1400px){
+    :root{--wrap-max:1220px}
+    .cell{min-height:118px}
+    .stat{padding:13px 18px}
+    .stat .value{font-size:24px}
+    .title h1{font-size:30px}
   }
 </style>
 </head>
@@ -349,8 +403,8 @@
 <div class="wrap" id="app" style="display:none">
 
   <div class="tabs" id="tabs">
-    <div class="tab active" data-p="p1"><span class="dot"></span><span class="nm" id="nm-p1">1. fő</span><span class="hr" id="hr-p1"></span></div>
-    <div class="tab" data-p="p2"><span class="dot"></span><span class="nm" id="nm-p2">2. fő</span><span class="hr" id="hr-p2"></span></div>
+    <div class="tab active" data-p="p1"><span class="dot"></span><span class="nm" id="nm-p1">Marcell</span><span class="hr" id="hr-p1"></span></div>
+    <div class="tab" data-p="p2"><span class="dot"></span><span class="nm" id="nm-p2">Dániel</span><span class="hr" id="hr-p2"></span></div>
     <div class="tab" data-p="summary"><span class="dot"></span><span class="nm">Összesítő</span></div>
   </div>
 
@@ -502,24 +556,37 @@
 </div>
 
 <!-- Bejelentkező sáv -->
-<div class="login-bar" id="login-bar">
-  <div class="chat-log" id="chat-log"></div>
-  <form class="login-form" id="login-form">
-    <input type="text" id="login-input" placeholder="Írd be a neved a csatlakozáshoz…" maxlength="24" autocomplete="off">
-    <button type="submit" class="login-btn">Csatlakozás</button>
-  </form>
-  <div class="login-status" id="login-status" style="display:none">
-    <button class="chat-toggle" id="chat-toggle" title="Üzenetek">💬</button>
-    <div class="login-who">
-      <span class="login-dot" id="login-dot"></span>
-      <div class="login-txt">
-        <span class="login-name" id="login-name"></span>
-        <span class="login-sync" id="login-sync"></span>
-      </div>
+<button class="chat-bubble" id="chat-bubble" aria-label="Chat megnyitása">
+  <span id="bubble-icon">💬</span>
+  <span class="bubble-dot" id="bubble-dot" style="display:none"></span>
+</button>
+
+<div class="chat-window" id="chat-window">
+  <div class="cw-head">
+    <div class="cw-title">💬 Chat</div>
+    <button class="cw-close" id="cw-close" aria-label="Bezárás">×</button>
+  </div>
+
+  <form class="cw-login" id="login-form">
+    <p>Írd be a neved, hogy csatlakozz — Marcell és Dániel a saját beosztásukhoz szinkronizál, bárki más csak megtekintő lesz, de írhat a chatbe.</p>
+    <div class="cw-login-row">
+      <input type="text" id="login-input" placeholder="A neved…" maxlength="24" autocomplete="off">
+      <button type="submit" class="login-btn">Csatlakozás</button>
     </div>
-    <input type="text" id="chat-input" placeholder="Írj üzenetet…" maxlength="300" autocomplete="off">
-    <button class="chat-send" id="chat-send" title="Küldés">➤</button>
-    <button class="login-out" id="login-out">Ki</button>
+  </form>
+
+  <div class="cw-body" id="login-status" style="display:none">
+    <div class="cw-identity">
+      <span class="login-dot" id="login-dot"></span>
+      <span class="login-name" id="login-name"></span>
+      <span class="login-sync" id="login-sync"></span>
+      <button class="login-out" id="login-out">Ki</button>
+    </div>
+    <div class="cw-messages" id="chat-log"></div>
+    <div class="cw-input-row">
+      <input type="text" id="chat-input" placeholder="Írj üzenetet…" maxlength="300" autocomplete="off">
+      <button class="chat-send" id="chat-send" title="Küldés">➤</button>
+    </div>
   </div>
 </div>
 
@@ -546,7 +613,7 @@ const HU_DOW_SHORT=['H','K','Sze','Cs','P','Szo','V'];
 const LOCAL_KEY='moori-munkanaptar-2fo-v1';
 
 let state={
-  profiles:{ p1:{name:'1. fő',rates:null}, p2:{name:'2. fő',rates:null} },
+  profiles:{ p1:{name:'Marcell',rates:null}, p2:{name:'Dániel',rates:null} },
   shifts:{ p1:{}, p2:{} },   // { 'YYYY-MM-DD':[{s,e,p,v}] } · v = koordinátor által igazolva
   settings:{ breakMin:30 },  // munkaközi szünet, globálisan mindkét profilra
   holidays:{},               // { 'YYYY-MM-DD': true } · piros betűs ünnepnap (+100%)
@@ -640,8 +707,8 @@ async function initStore(){
       db.ref(ROOT).on('value',snap=>{
         const v=snap.val()||{};
         suppressWrite=true;
-        state.profiles.p1={name:(v.profiles?.p1?.name)||'1. fő',pay:(v.profiles?.p1?.pay)||null};
-        state.profiles.p2={name:(v.profiles?.p2?.name)||'2. fő',pay:(v.profiles?.p2?.pay)||null};
+        state.profiles.p1={name:(v.profiles?.p1?.name)||'Marcell',pay:(v.profiles?.p1?.pay)||null};
+        state.profiles.p2={name:(v.profiles?.p2?.name)||'Dániel',pay:(v.profiles?.p2?.pay)||null};
         normalizePay();
         state.shifts.p1=(v.shifts?.p1)||{};
         state.shifts.p2=(v.shifts?.p2)||{};
@@ -1209,7 +1276,7 @@ function renderModalListIfOpen(){ if(openDateKey && document.getElementById('scr
 const SESSION_KEY='mn_session';
 // fix, a kijelzett profilnévtől független bejelentkezés-felismerés: aki ezekkel a nevekkel lép be,
 // mindig ugyanahhoz a profilhoz szinkronizál, akkor is, ha a fülön más felirat (pl. "1. fő") látszik
-const LOGIN_ALIASES={ 'mooris':'p1', 'grim':'p2' };
+const LOGIN_ALIASES={ 'mooris':'p1', 'marcell':'p1', 'grim':'p2', 'daniel':'p2', 'dániel':'p2' };
 function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch(e){ return null; } }
 function saveSession(s){ try{ localStorage.setItem(SESSION_KEY,JSON.stringify(s)); }catch(e){} }
 function clearSessionStorage(){ try{ localStorage.removeItem(SESSION_KEY); }catch(e){} }
@@ -1282,7 +1349,9 @@ document.getElementById('login-out').addEventListener('click',()=>{
 });
 
 /* ---------- chat ---------- */
-let chatLogOpen=false;
+let chatWindowOpen=false;
+let seenMsgCount=0;
+let chatInitialized=false;
 function persistChat(id,msg){
   if(useFirebase){ db.ref(`${ROOT}/chat/${id}`).set(msg); }
   else{ if(!state.chat)state.chat={}; state.chat[id]=msg; persistLocal(); renderChatLog(); }
@@ -1300,25 +1369,50 @@ function sendChatMessage(){
 function renderChatLog(){
   const box=document.getElementById('chat-log');
   const entries=Object.values(state.chat||{}).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(!chatInitialized){
+    // első betöltéskor a meglévő előzményt nem jelöljük olvasatlannak
+    chatInitialized=true; seenMsgCount=entries.length;
+  }else if(!chatWindowOpen && entries.length>seenMsgCount){
+    const newest=entries[entries.length-1];
+    if(!session || newest.name!==session.name) document.getElementById('bubble-dot').style.display='block';
+  }
   if(!entries.length){ box.innerHTML='<div class="chat-empty">Még nincs üzenet — írj elsőnek!</div>'; return; }
   const wasAtBottom = box.scrollTop+box.clientHeight >= box.scrollHeight-20;
   box.innerHTML='';
   entries.forEach(m=>{
-    const row=document.createElement('div');row.className='chat-msg '+(m.role||'viewer');
+    const mine = session && m.name===session.name;
+    const row=document.createElement('div');row.className='chat-msg '+(mine?'own':'other')+' '+(m.role||'viewer');
     const t=new Date(m.ts||Date.now());
     const time=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
-    row.innerHTML=`<span class="cn">${escapeHtml(m.name||'?')}</span><span class="ct">${escapeHtml(m.text||'')}</span><span class="cts">${time}</span>`;
+    row.innerHTML=`${mine?'':`<span class="sender">${escapeHtml(m.name||'?')}</span>`}<span class="bubble">${escapeHtml(m.text||'')}</span><span class="cts">${time}</span>`;
     box.appendChild(row);
   });
-  if(wasAtBottom || chatLogOpen===false) box.scrollTop=box.scrollHeight;
+  if(wasAtBottom || chatWindowOpen) box.scrollTop=box.scrollHeight;
+  if(chatWindowOpen) seenMsgCount=entries.length;
 }
-document.getElementById('chat-toggle').addEventListener('click',()=>{
-  chatLogOpen=!chatLogOpen;
+function openChatWindow(){
+  chatWindowOpen=true;
+  document.getElementById('chat-window').classList.add('open');
+  document.getElementById('chat-bubble').classList.add('open');
+  document.getElementById('bubble-icon').textContent='✕';
+  document.getElementById('bubble-dot').style.display='none';
+  const entries=Object.values(state.chat||{});
+  seenMsgCount=entries.length;
   const box=document.getElementById('chat-log');
-  box.classList.toggle('open',chatLogOpen);
-  document.getElementById('chat-toggle').classList.toggle('on',chatLogOpen);
-  if(chatLogOpen) box.scrollTop=box.scrollHeight;
+  box.scrollTop=box.scrollHeight;
+  if(session) setTimeout(()=>document.getElementById('chat-input').focus(),150);
+  else setTimeout(()=>document.getElementById('login-input').focus(),150);
+}
+function closeChatWindow(){
+  chatWindowOpen=false;
+  document.getElementById('chat-window').classList.remove('open');
+  document.getElementById('chat-bubble').classList.remove('open');
+  document.getElementById('bubble-icon').textContent='💬';
+}
+document.getElementById('chat-bubble').addEventListener('click',()=>{
+  if(chatWindowOpen) closeChatWindow(); else openChatWindow();
 });
+document.getElementById('cw-close').addEventListener('click',closeChatWindow);
 document.getElementById('chat-send').addEventListener('click',sendChatMessage);
 document.getElementById('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendChatMessage(); } });
 
