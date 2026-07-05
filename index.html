@@ -250,6 +250,10 @@
     font-family:inherit;font-size:13px;font-variant-numeric:tabular-nums;
   }
   .travel-row input:focus,.travel-row select:focus{outline:none;border-color:var(--amber-line)}
+  .gas-split-row{padding-top:2px}
+  .gas-split-toggle{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px;color:var(--text-dim)}
+  .gas-split-toggle input{width:16px;height:16px;accent-color:var(--amber);cursor:pointer;flex:none}
+  .gas-total-wrap{margin-left:4px}
   .gas-calc{font-size:12.5px;color:var(--text-dim);border-top:1px dashed var(--line);padding-top:11px;line-height:1.7}
   .gas-calc b{font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--text)}
   .gas-calc .neg{color:#ff8a8d;font-weight:600}
@@ -522,6 +526,15 @@
       <span class="rin"><i>Benzinár</i><input type="number" id="gas-price" min="0" step="1"> Ft/l</span>
       <span class="rin"><i>Fogyasztás</i><input type="number" id="gas-cons" min="0" step="0.1"> l/100km</span>
     </div>
+    <div class="travel-row gas-split-row">
+      <label class="gas-split-toggle">
+        <input type="checkbox" id="gas-split-mode">
+        <span>50–50% alapú felezés (tankolás alapján, a km-es matek helyett)</span>
+      </label>
+      <span class="rin gas-total-wrap" id="gas-total-wrap" style="display:none">
+        <i>Tankolás összege</i><input type="number" id="gas-total" min="0" step="500"> Ft
+      </span>
+    </div>
     <div class="gas-calc" id="gas-calc"></div>
   </div>
 </div>
@@ -630,7 +643,7 @@ let state={
   shifts:{ p1:{}, p2:{} },   // { 'YYYY-MM-DD':[{s,e,p,v}] } · v = koordinátor által igazolva
   settings:{ breakMin:30 },  // munkaközi szünet, globálisan mindkét profilra
   holidays:{},               // { 'YYYY-MM-DD': true } · piros betűs ünnepnap (+100%)
-  travel:{ bus:{de:'',du:'',ej:''}, fuelPrice:612, consumption:7.0 },  // közös: buszindulások + automatikus benzinelszámolás
+  travel:{ bus:{de:'',du:'',ej:''}, fuelPrice:612, consumption:7.0, splitMode:'km', fuelTotal:0 },  // közös: buszindulások + benzinelszámolás (km-alapú vagy 50-50%-os felezés)
   chat:{}   // { id: {name,role,text,ts} } · közös üzenetfal, bárki írhat aki bejelentkezett
 };
 let active='p1';
@@ -727,7 +740,7 @@ async function initStore(){
         state.shifts.p2=(v.shifts?.p2)||{};
         state.settings={ breakMin:(v.settings?.breakMin!=null? v.settings.breakMin:30) };
         state.holidays=v.holidays||{};
-        state.travel={ bus:(v.travel?.bus)||{de:'',du:'',ej:''}, fuelPrice:(v.travel?.fuelPrice!=null?v.travel.fuelPrice:612), consumption:(v.travel?.consumption!=null?v.travel.consumption:7.0) };
+        state.travel={ bus:(v.travel?.bus)||{de:'',du:'',ej:''}, fuelPrice:(v.travel?.fuelPrice!=null?v.travel.fuelPrice:612), consumption:(v.travel?.consumption!=null?v.travel.consumption:7.0), splitMode:(v.travel?.splitMode||'km'), fuelTotal:(v.travel?.fuelTotal!=null?v.travel.fuelTotal:0) };
         state.chat=v.chat||{};
         suppressWrite=false;
         refreshProfileUI(); render(); refreshBusInputs(); renderBusHint(); refreshGasInputs(); renderTotals(); renderChatLog();
@@ -776,7 +789,7 @@ function persistBus(){
 }
 function persistGasSettings(){
   if(suppressWrite||readOnly) return;
-  if(useFirebase){ db.ref(`${ROOT}/travel`).update({fuelPrice:state.travel.fuelPrice,consumption:state.travel.consumption}); }
+  if(useFirebase){ db.ref(`${ROOT}/travel`).update({fuelPrice:state.travel.fuelPrice,consumption:state.travel.consumption,splitMode:state.travel.splitMode,fuelTotal:state.travel.fuelTotal}); }
   else persistLocal();
 }
 
@@ -935,7 +948,8 @@ function renderTotals(){
 }
 function renderSummaryStats(results){
   const f=n=>Math.round(n).toLocaleString('hu-HU');
-  const {haviBenzinElszamolas,kozosNapokSzama}=computeGasMonthly();
+  const g=computeGasMonthly();
+  const haviBenzinElszamolas=g.haviBenzinElszamolas;
   const n1=state.profiles.p1.name,n2=state.profiles.p2.name;
   document.getElementById('ss-name-p1').textContent=n1;
   document.getElementById('ss-name-p2').textContent=n2;
@@ -953,8 +967,14 @@ function renderSummaryStats(results){
   candy1.textContent=`${c1.kg} kg`; candy1.className=c1.tier; candy1.title=c1.msg;
   candy2.textContent=`${c2.kg} kg`; candy2.className=c2.tier; candy2.title=c2.msg;
   const gasBox=document.getElementById('ss-gas');
-  if(kozosNapokSzama>0){
-    gasBox.innerHTML=`⛽ <b>${f(haviBenzinElszamolas)} Ft</b> benzinelszámolás · ${kozosNapokSzama} közös nap alapján · ${escapeHtml(n1)} fizeti ${escapeHtml(n2)}-nak`;
+  if(g.mode==='fifty'){
+    if(g.fuelTotal>0){
+      gasBox.innerHTML=`⛽ 50–50% felezés · Tankolás: <b>${f(g.fuelTotal)} Ft</b> → <b>${f(haviBenzinElszamolas)} Ft</b> · ${escapeHtml(n1)} fizeti ${escapeHtml(n2)}-nak`;
+    }else{
+      gasBox.innerHTML='50–50%-os felezés mód aktív — írd be a tankolás összegét a benzin-panelen.';
+    }
+  }else if(g.kozosNapokSzama>0){
+    gasBox.innerHTML=`⛽ <b>${f(haviBenzinElszamolas)} Ft</b> benzinelszámolás · ${g.kozosNapokSzama} közös nap alapján · ${escapeHtml(n1)} fizeti ${escapeHtml(n2)}-nak`;
   }else{
     gasBox.innerHTML='Ebben a hónapban még nincs olyan nap, amikor mindketten dolgoznátok.';
   }
@@ -1131,13 +1151,17 @@ function buildMonthSummary(){
   const f=n=>Math.round(n).toLocaleString('hu-HU');
   if(active==='summary'){
     const r1=summarizeProfile('p1'), r2=summarizeProfile('p2');
-    const {haviBenzinElszamolas,kozosNapokSzama}=computeGasMonthly();
+    const g=computeGasMonthly();
     const cnt=r1.cnt+r2.cnt;
     let text=`${HU_MONTHS[m]} ${y} · Összesítő\n`
       +`${state.profiles.p1.name}: ${r1.cnt} műszak · ${fmtH(r1.paidMins)} óra · ${f(r1.earn)} Ft\n`
       +`${state.profiles.p2.name}: ${r2.cnt} műszak · ${fmtH(r2.paidMins)} óra · ${f(r2.earn)} Ft\n`
       +`Összesen: ${cnt} műszak · ${f(r1.earn+r2.earn)} Ft`;
-    if(kozosNapokSzama>0) text+=`\nBenzin elszámolás: ${kozosNapokSzama} közös nap · ${f(haviBenzinElszamolas)} Ft (${state.profiles.p1.name} → ${state.profiles.p2.name})`;
+    if(g.mode==='fifty'){
+      if(g.fuelTotal>0) text+=`\nBenzin elszámolás (50–50%): ${f(g.fuelTotal)} Ft tankolás fele · ${f(g.haviBenzinElszamolas)} Ft (${state.profiles.p1.name} → ${state.profiles.p2.name})`;
+    }else if(g.kozosNapokSzama>0){
+      text+=`\nBenzin elszámolás: ${g.kozosNapokSzama} közös nap · ${f(g.haviBenzinElszamolas)} Ft (${state.profiles.p1.name} → ${state.profiles.p2.name})`;
+    }
     return {text,cnt,earn:r1.earn+r2.earn};
   }
   const r=summarizeProfile(active);
@@ -1250,14 +1274,27 @@ const TE_NAPI_KM_HANYADOD = 16;   // 10km kitérő + (12km közös út / 2) — 
 function refreshGasInputs(){
   document.getElementById('gas-price').value=state.travel?.fuelPrice??612;
   document.getElementById('gas-cons').value=state.travel?.consumption??7.0;
+  const isFifty=state.travel?.splitMode==='fifty';
+  document.getElementById('gas-split-mode').checked=isFifty;
+  document.getElementById('gas-total-wrap').style.display=isFifty?'':'none';
+  document.getElementById('gas-total').value=state.travel?.fuelTotal||'';
+  document.getElementById('gas-price').disabled = isFifty || readOnly;
+  document.getElementById('gas-cons').disabled = isFifty || readOnly;
+  document.getElementById('gas-total').disabled = readOnly;
+  document.getElementById('gas-split-mode').disabled = readOnly;
 }
-[['gas-price','fuelPrice'],['gas-cons','consumption']].forEach(([id,key])=>{
+[['gas-price','fuelPrice'],['gas-cons','consumption'],['gas-total','fuelTotal']].forEach(([id,key])=>{
   document.getElementById(id).addEventListener('input',()=>{
     const v=parseFloat(document.getElementById(id).value);
-    if(!state.travel)state.travel={bus:{de:'',du:'',ej:''},fuelPrice:612,consumption:7.0};
+    if(!state.travel)state.travel={bus:{de:'',du:'',ej:''},fuelPrice:612,consumption:7.0,splitMode:'km',fuelTotal:0};
     state.travel[key]=(isNaN(v)?0:v);
     persistGasSettings();renderTotals();
   });
+});
+document.getElementById('gas-split-mode').addEventListener('change',e=>{
+  if(!state.travel)state.travel={bus:{de:'',du:'',ej:''},fuelPrice:612,consumption:7.0,splitMode:'km',fuelTotal:0};
+  state.travel.splitMode = e.target.checked ? 'fifty' : 'km';
+  persistGasSettings();refreshGasInputs();renderTotals();
 });
 // az aktuálisan megjelenített hónapban hány olyan nap van, amikor MINDKÉT fő dolgozott
 function countCommonDays(){
@@ -1269,19 +1306,30 @@ function countCommonDays(){
   return n;
 }
 function computeGasMonthly(){
+  if(state.travel?.splitMode==='fifty'){
+    const total=state.travel?.fuelTotal||0;
+    const haviBenzinElszamolas=Math.round(total/2);
+    return {kozosNapokSzama:null,haviBenzinElszamolas,teNapiBenzinkoltseged:0,mode:'fifty',fuelTotal:total};
+  }
   const price=state.travel?.fuelPrice||0, cons=state.travel?.consumption||0;
   const kozosNapokSzama=countCommonDays();
   const teNapiBenzinkoltseged=(TE_NAPI_KM_HANYADOD/100)*cons*price;
   const haviBenzinElszamolas=Math.round(teNapiBenzinkoltseged*kozosNapokSzama);
-  return {kozosNapokSzama,haviBenzinElszamolas,teNapiBenzinkoltseged};
+  return {kozosNapokSzama,haviBenzinElszamolas,teNapiBenzinkoltseged,mode:'km'};
 }
 function renderGasCalc(){
-  const {kozosNapokSzama,haviBenzinElszamolas}=computeGasMonthly();
+  const g=computeGasMonthly();
   const f=n=>Math.round(n).toLocaleString('hu-HU');
   const box=document.getElementById('gas-calc');
-  if(kozosNapokSzama===0){ box.innerHTML='Ebben a hónapban még nincs olyan nap, amikor mindketten dolgoznátok.'; return; }
-  box.innerHTML=`${TE_NAPI_KM_HANYADOD} km/nap · <b>${kozosNapokSzama}</b> közös nap ebben a hónapban → `
-    +`<b>${state.profiles.p1.name}</b> havi elszámolása: <span class="neg">${f(haviBenzinElszamolas)} Ft</span>`;
+  if(g.mode==='fifty'){
+    if(!g.fuelTotal){ box.innerHTML='Írd be a tankolás összegét a felezéshez.'; return; }
+    box.innerHTML=`50–50% felezés · Tankolás: <b>${f(g.fuelTotal)} Ft</b> → `
+      +`<b>${state.profiles.p1.name}</b> fele: <span class="neg">${f(g.haviBenzinElszamolas)} Ft</span>`;
+    return;
+  }
+  if(g.kozosNapokSzama===0){ box.innerHTML='Ebben a hónapban még nincs olyan nap, amikor mindketten dolgoznátok.'; return; }
+  box.innerHTML=`${TE_NAPI_KM_HANYADOD} km/nap · <b>${g.kozosNapokSzama}</b> közös nap ebben a hónapban → `
+    +`<b>${state.profiles.p1.name}</b> havi elszámolása: <span class="neg">${f(g.haviBenzinElszamolas)} Ft</span>`;
 }
 [['pay-base','base'],['pay-du','duPct'],['pay-ej','ejPct']].forEach(([id,key])=>{
   document.getElementById(id).addEventListener('input',()=>{
@@ -1331,11 +1379,10 @@ function applySession(){
   }
   document.querySelector('.tab[data-p="p1"]').style.display = readOnly?'none':'';
   document.querySelector('.tab[data-p="p2"]').style.display = readOnly?'none':'';
-  document.getElementById('gas-price').disabled = readOnly;
-  document.getElementById('gas-cons').disabled = readOnly;
   document.getElementById('bus-de').disabled = readOnly;
   document.getElementById('bus-du').disabled = readOnly;
   document.getElementById('bus-ej').disabled = readOnly;
+  refreshGasInputs();
   renderLoginBar();
 }
 function renderLoginBar(){
