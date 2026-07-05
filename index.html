@@ -256,6 +256,13 @@
   .gas-calc .pos{color:var(--green);font-weight:600}
   .stat .value.neg{color:#ff8a8d}
   .stat .value.pos{color:var(--green)}
+  .stat .value.candy2{color:#ff6fae}
+  .stat .value.candy4{color:var(--green)}
+  .stat .value.candy0{color:var(--text-faint);font-size:15px;font-weight:500}
+  #ss-candy-p1,#ss-candy-p2{font-weight:700}
+  .ss-row .candy2{color:#ff6fae}
+  .ss-row .candy4{color:var(--green)}
+  .ss-row .candy0{color:var(--text-faint);font-weight:500;font-size:11.5px}
   .loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:99;color:var(--text-dim);font-size:14px}
 
   /* ---- Chat buborék (lebegő gomb) ---- */
@@ -421,6 +428,7 @@
       <div class="stat"><div class="label">Óra / hó</div><div class="value accent" id="stat-hours">0<small>ó</small></div></div>
       <div class="stat"><div class="label">Kereset / hó</div><div class="value" id="stat-earn">0<small> Ft</small></div></div>
       <div class="stat" id="stat-gas-box"><div class="label" id="stat-gas-label">Benzinpénz</div><div class="value" id="stat-gas">0<small> Ft</small></div></div>
+      <div class="stat" id="stat-candy-box" title=""><div class="label">🍬 Gumicukor</div><div class="value" id="stat-candy">–</div></div>
     </div>
   </header>
 
@@ -430,12 +438,14 @@
       <div class="ss-row"><span>Műszak</span><b id="ss-count-p1">0</b></div>
       <div class="ss-row"><span>Óra</span><b id="ss-hours-p1">0 ó</b></div>
       <div class="ss-row"><span>Kereset</span><b id="ss-earn-p1">0 Ft</b></div>
+      <div class="ss-row"><span>🍬 Gumicukor</span><b id="ss-candy-p1">–</b></div>
     </div>
     <div class="ss-card p2">
       <div class="ss-name" id="ss-name-p2"></div>
       <div class="ss-row"><span>Műszak</span><b id="ss-count-p2">0</b></div>
       <div class="ss-row"><span>Óra</span><b id="ss-hours-p2">0 ó</b></div>
       <div class="ss-row"><span>Kereset</span><b id="ss-earn-p2">0 Ft</b></div>
+      <div class="ss-row"><span>🍬 Gumicukor</span><b id="ss-candy-p2">–</b></div>
     </div>
     <div class="ss-gas" id="ss-gas"></div>
   </div>
@@ -879,6 +889,12 @@ function render(){
   buildCalendarInto(active,document.getElementById('grid'),active!=='summary');
   renderTotals();
 }
+// Fürge Diák gumicukor-bónusz: 10-19 ledolgozott műszakért 2 kg, 20+ műszakért 4 kg jár
+function computeCandyBonus(cnt){
+  if(cnt>=20) return {kg:4, tier:'candy4', remaining:0, msg:'Elérted a max szintet! 🎉'};
+  if(cnt>=10) return {kg:2, tier:'candy2', remaining:20-cnt, msg:`Még ${20-cnt} műszak a 4 kg-ig`};
+  return {kg:0, tier:'candy0', remaining:10-cnt, msg:`Még ${10-cnt} műszak a 2 kg-ig`};
+}
 function renderTotals(){
   const y=view.getFullYear(),m=view.getMonth(),pre=`${y}-${pad(m+1)}-`;
   const brk=state.settings?.breakMin||0;
@@ -909,6 +925,11 @@ function renderTotals(){
     document.getElementById('stat-count').textContent=results[active].cnt;
     document.getElementById('stat-hours').innerHTML=`${fmtH(results[active].paidMins)}<small>ó</small>`;
     updatePayCalc(results[active].earn);
+    const candy=computeCandyBonus(results[active].cnt);
+    const candyEl=document.getElementById('stat-candy');
+    candyEl.className='value '+candy.tier;
+    candyEl.textContent = candy.kg>0 ? `${candy.kg} kg` : '0 kg';
+    document.getElementById('stat-candy-box').title=candy.msg;
   }
   renderGasCalc();
 }
@@ -927,6 +948,10 @@ function renderSummaryStats(results){
   document.getElementById('ss-earn-p2').textContent=`${f(net2)} Ft`;
   document.getElementById('ss-earn-p1').title=`Bruttó: ${f(results.p1.earn)} Ft`;
   document.getElementById('ss-earn-p2').title=`Bruttó: ${f(results.p2.earn)} Ft`;
+  const c1=computeCandyBonus(results.p1.cnt), c2=computeCandyBonus(results.p2.cnt);
+  const candy1=document.getElementById('ss-candy-p1'), candy2=document.getElementById('ss-candy-p2');
+  candy1.textContent=`${c1.kg} kg`; candy1.className=c1.tier; candy1.title=c1.msg;
+  candy2.textContent=`${c2.kg} kg`; candy2.className=c2.tier; candy2.title=c2.msg;
   const gasBox=document.getElementById('ss-gas');
   if(kozosNapokSzama>0){
     gasBox.innerHTML=`⛽ <b>${f(haviBenzinElszamolas)} Ft</b> benzinelszámolás · ${kozosNapokSzama} közös nap alapján · ${escapeHtml(n1)} fizeti ${escapeHtml(n2)}-nak`;
@@ -1372,6 +1397,24 @@ function sendChatMessage(){
   persistChat(id,msg);
   input.value='';
 }
+// vendégek (nem Marcell/Dániel) egyedi, kellemes pasztell színt kapnak a nevük alapján — mindig ugyanazt
+const VIEWER_COLORS={ 'anett':{bg:'#ffb3c6',fg:'#4a0f24'} };
+const VIEWER_PALETTE=[
+  {bg:'#ffb3c6',fg:'#4a0f24'}, {bg:'#b3d9ff',fg:'#0a2e4a'}, {bg:'#c3f7c8',fg:'#0f3d16'},
+  {bg:'#ffe3a3',fg:'#4a3200'}, {bg:'#d9b8ff',fg:'#2e0f4a'}, {bg:'#ffcab0',fg:'#4a1e00'},
+  {bg:'#b8ecec',fg:'#0a3d3d'}, {bg:'#f7c6e0',fg:'#4a0f30'}
+];
+function getViewerColor(name){
+  const key=(name||'').trim().toLowerCase();
+  if(VIEWER_COLORS[key]) return VIEWER_COLORS[key];
+  let hash=0; for(let i=0;i<key.length;i++){ hash=key.charCodeAt(i)+((hash<<5)-hash); }
+  return VIEWER_PALETTE[Math.abs(hash)%VIEWER_PALETTE.length];
+}
+function bubbleColorFor(m){
+  if(m.role==='p1') return {bg:'#f5a623',fg:'#1a1304'};
+  if(m.role==='p2') return {bg:'#3ec9c0',fg:'#06201e'};
+  return getViewerColor(m.name);
+}
 function renderChatLog(){
   const box=document.getElementById('chat-log');
   const entries=Object.values(state.chat||{}).sort((a,b)=>(a.ts||0)-(b.ts||0));
@@ -1387,10 +1430,11 @@ function renderChatLog(){
   box.innerHTML='';
   entries.forEach(m=>{
     const mine = session && m.name===session.name;
+    const c=bubbleColorFor(m);
     const row=document.createElement('div');row.className='chat-msg '+(mine?'own':'other')+' '+(m.role||'viewer');
     const t=new Date(m.ts||Date.now());
     const time=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
-    row.innerHTML=`${mine?'':`<span class="sender">${escapeHtml(m.name||'?')}</span>`}<span class="bubble">${escapeHtml(m.text||'')}</span><span class="cts">${time}</span>`;
+    row.innerHTML=`${mine?'':`<span class="sender" style="color:${c.bg}">${escapeHtml(m.name||'?')}</span>`}<span class="bubble" style="background:${c.bg};color:${c.fg}">${escapeHtml(m.text||'')}</span><span class="cts">${time}</span>`;
     box.appendChild(row);
   });
   if(wasAtBottom || chatWindowOpen) box.scrollTop=box.scrollHeight;
