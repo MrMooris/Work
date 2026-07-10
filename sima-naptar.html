@@ -52,6 +52,26 @@
   .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--line)}
   .today-btn{height:36px;padding:0 14px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-soft);color:var(--text);font-weight:500;font-size:13px;transition:.15s}
   .today-btn:hover{background:var(--surface-2);border-color:var(--line)}
+  .today-btn.on{background:var(--amber);color:#1a1304;border-color:transparent;font-weight:600}
+
+  .selbar{display:none;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+  .selbar.open{display:flex}
+  .selcount{font-size:13px;color:var(--text-dim);white-space:nowrap}
+  .selcount b{font-family:'Space Grotesk',sans-serif;color:var(--text);font-size:15px;font-variant-numeric:tabular-nums}
+  .sellbl{font-size:11.5px;color:var(--text-faint)}
+  .selbar input[type=time]{width:auto;padding:6px 9px;font-size:13px}
+  .selbtn{height:34px;padding:0 13px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--text);font-size:12.5px;font-weight:500;transition:.15s;white-space:nowrap;flex:0 0 auto}
+  .selbtn:hover{background:var(--surface-2);border-color:var(--line-soft)}
+  .selbtn.del{color:#ff6b6f;border-color:rgba(229,72,77,.3)}
+  .selbtn.del:hover{background:rgba(229,72,77,.12)}
+  .selbtn.done{background:var(--amber);color:#1a1304;border-color:transparent;font-weight:600}
+  .selbtn.done:hover{filter:brightness(1.08)}
+  .selbtn:disabled{opacity:.4;cursor:default}
+  .cell.sel{background:var(--amber-soft)}
+  .cell.sel:hover{background:var(--amber-soft)}
+  .cell.sel::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 2px var(--amber);pointer-events:none}
+  .selmark{position:absolute;right:6px;top:6px;width:18px;height:18px;border-radius:5px;background:var(--amber);color:#1a1304;display:none;place-items:center;font-size:12px;font-weight:700;z-index:1}
+  .cell.sel .selmark{display:grid}
 
   .cal{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden}
   .weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line-soft)}
@@ -103,12 +123,13 @@
     .weekdays div{font-size:9px;padding:7px 2px}
     .fields{grid-template-columns:1fr}
     .stat{padding:9px 12px}.stat .value{font-size:17px}
+    .selbar{gap:7px}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a href="https://mrmooris.github.io/Work/" class="back-link">← Vissza a naptárhoz</a>
+  <a href="munkanaptar.html" class="back-link">← Vissza a naptárhoz</a>
   <span class="eyebrow">Egyszerű naptár</span>
   <h1>Havi beosztás &amp; bér</h1>
 
@@ -127,10 +148,22 @@
   <div class="navbar">
     <div class="month-label" id="month-label">—</div>
     <div class="navbtns">
+      <button class="today-btn" id="sel-toggle">Kijelölés</button>
       <button class="today-btn" id="today-btn">Ma</button>
       <button class="icon-btn" id="prev" aria-label="Előző hónap">‹</button>
       <button class="icon-btn" id="next" aria-label="Következő hónap">›</button>
     </div>
+  </div>
+
+  <div class="selbar" id="selbar">
+    <span class="selcount"><b id="sel-count">0</b> nap kijelölve</span>
+    <span class="sellbl">Kezdés</span>
+    <input type="time" id="sel-start" value="08:00">
+    <span class="sellbl">Befejezés</span>
+    <input type="time" id="sel-end" value="16:00">
+    <button class="selbtn done" id="sel-apply">Hozzáadás mindenhez</button>
+    <button class="selbtn del" id="sel-del">Törlés</button>
+    <button class="selbtn" id="sel-close">Kész</button>
   </div>
 
   <div class="cal">
@@ -165,6 +198,8 @@ let shifts={};   // { 'YYYY-MM-DD': [{s,e}] }
 let wage=0;
 let view=new Date(); view.setDate(1);
 let openDateKey=null;
+let selectMode=false;
+let selected=new Set();
 
 function loadData(){
   try{
@@ -227,7 +262,16 @@ function render(){
       }
       const hint=document.createElement('div'); hint.className='add-hint'; hint.textContent='+';
       cell.appendChild(hint);
-      cell.addEventListener('click',()=>openDay(key));
+      const sm=document.createElement('div'); sm.className='selmark'; sm.textContent='✓';
+      cell.appendChild(sm);
+      if(selected.has(key)) cell.classList.add('sel');
+      cell.addEventListener('click',()=>{
+        if(selectMode){
+          if(selected.has(key)){ selected.delete(key); cell.classList.remove('sel'); }
+          else{ selected.add(key); cell.classList.add('sel'); }
+          updateSelCount();
+        }else openDay(key);
+      });
     }
     grid.appendChild(cell);
   });
@@ -286,6 +330,36 @@ function deleteShift(idx){
 document.getElementById('prev').onclick=()=>{ view.setMonth(view.getMonth()-1); render(); };
 document.getElementById('next').onclick=()=>{ view.setMonth(view.getMonth()+1); render(); };
 document.getElementById('today-btn').onclick=()=>{ view=new Date(); view.setDate(1); render(); };
+
+/* ---------- kijelölés mód (több nap egyszerre) ---------- */
+function updateSelCount(){
+  document.getElementById('sel-count').textContent=selected.size;
+  document.getElementById('sel-apply').disabled=selected.size===0;
+  document.getElementById('sel-del').disabled=selected.size===0;
+}
+function toggleSelectMode(on){
+  selectMode=(on!==undefined)?on:!selectMode;
+  if(!selectMode) selected.clear();
+  document.getElementById('selbar').classList.toggle('open',selectMode);
+  document.getElementById('sel-toggle').textContent=selectMode?'Mégse':'Kijelölés';
+  document.getElementById('sel-toggle').classList.toggle('on',selectMode);
+  updateSelCount(); render();
+}
+document.getElementById('sel-toggle').onclick=()=>toggleSelectMode();
+document.getElementById('sel-close').onclick=()=>toggleSelectMode(false);
+document.getElementById('sel-apply').onclick=()=>{
+  const s=document.getElementById('sel-start').value, e=document.getElementById('sel-end').value;
+  if(!s||!e) return;
+  selected.forEach(key=>{
+    if(!shifts[key]) shifts[key]=[];
+    if(!shifts[key].some(x=>x.s===s&&x.e===e)){ shifts[key].push({s,e}); shifts[key].sort((a,b)=>a.s.localeCompare(b.s)); }
+  });
+  saveData(); render();
+};
+document.getElementById('sel-del').onclick=()=>{
+  selected.forEach(key=>{ if(shifts[key]) delete shifts[key]; });
+  saveData(); render();
+};
 document.getElementById('m-close').onclick=closeModal;
 document.getElementById('scrim').addEventListener('click',e=>{ if(e.target.id==='scrim') closeModal(); });
 document.getElementById('f-add').onclick=addShift;
