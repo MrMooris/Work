@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Egyszerű naptár</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12141d;--bg-2:#161925;--surface:#1c2030;--surface-2:#232838;
+    --line:#2c3242;--line-soft:#242a38;
+    --text:#e9ebf2;--text-dim:#8b91a6;--text-faint:#5a6076;
+    --amber:#f5a623;--amber-soft:rgba(245,166,35,.14);--amber-line:rgba(245,166,35,.42);
+    --radius:14px;--radius-sm:9px;--wrap-max:760px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:linear-gradient(to bottom, rgba(245,166,35,.08), transparent 300px), var(--bg);
+    background-attachment:fixed;background-repeat:no-repeat;
+    color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100%;
+    -webkit-font-smoothing:antialiased;line-height:1.4;
+  }
+  .wrap{max-width:var(--wrap-max);margin:0 auto;padding:22px 18px 60px}
+  a{color:inherit}
+  .back-link{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);text-decoration:none;margin-bottom:16px;transition:.15s}
+  .back-link:hover{color:var(--text)}
+  .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);font-weight:600}
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(20px,4vw,26px);letter-spacing:-.01em;margin:2px 0 18px}
+
+  .totals{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .stat{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:11px 16px;flex:1 1 118px;min-width:104px}
+  .stat .label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:3px}
+  .stat .value{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat .value.accent{color:var(--amber)}
+  .stat .value small{font-size:12px;font-weight:500;color:var(--text-dim);margin-left:2px}
+
+  .wage-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:11px 16px;margin-bottom:18px;flex-wrap:wrap}
+  .wage-box label{font-size:12.5px;font-weight:600;color:var(--text-dim)}
+  .wage-box input{background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;color:var(--text);font-family:inherit;font-size:14px;width:100px}
+  .wage-box input:focus{outline:none;border-color:var(--amber-line)}
+  .wage-box span{font-size:12.5px;color:var(--text-faint)}
+
+  .navbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .month-label{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;letter-spacing:-.01em}
+  .month-label .yr{color:var(--text-dim);font-weight:500;margin-left:6px}
+  .navbtns{display:flex;gap:6px;margin-left:auto}
+  button{font-family:inherit;cursor:pointer;color:inherit;border:none;background:none}
+  .icon-btn{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-soft);color:var(--text-dim);font-size:15px;display:grid;place-items:center;transition:.15s}
+  .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+  .today-btn{height:36px;padding:0 14px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-soft);color:var(--text);font-weight:500;font-size:13px;transition:.15s}
+  .today-btn:hover{background:var(--surface-2);border-color:var(--line)}
+
+  .cal{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden}
+  .weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line-soft)}
+  .weekdays div{text-align:center;padding:10px 4px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
+  .weekdays div.we{color:var(--amber);opacity:.75}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr)}
+  .cell{min-height:92px;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);padding:6px 6px 7px;position:relative;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;gap:4px}
+  .cell:nth-child(7n){border-right:none}
+  .cell:hover{background:var(--surface)}
+  .cell.we{background:rgba(245,166,35,.035)}
+  .cell.we:hover{background:var(--surface)}
+  .cell.out{cursor:default;opacity:.36}
+  .cell.out:hover{background:transparent}
+  .daynum{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--text-dim);width:23px;height:23px;display:grid;place-items:center;border-radius:6px}
+  .cell.we .daynum{color:var(--amber);opacity:.85}
+  .cell.today .daynum{background:var(--text);color:var(--bg);font-weight:700;opacity:1}
+  .shifts{display:flex;flex-direction:column;gap:3px;overflow:hidden}
+  .chip{background:var(--amber-soft);border:1px solid var(--amber-line);border-radius:6px;padding:3px 6px;font-size:10.5px;line-height:1.25;color:var(--amber);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .add-hint{position:absolute;right:6px;top:6px;width:18px;height:18px;border-radius:5px;display:grid;place-items:center;color:var(--text-faint);font-size:13px;opacity:0;transition:.12s}
+  .cell:not(.out):hover .add-hint{opacity:1}
+
+  .scrim{position:fixed;inset:0;background:rgba(8,9,14,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+  .scrim.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:18px;width:100%;max-width:380px;max-height:86vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .modal-head{padding:18px 20px 12px;border-bottom:1px solid var(--line-soft);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .modal-head h2{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;letter-spacing:-.01em}
+  .close-x{width:30px;height:30px;border-radius:8px;background:var(--surface-2);color:var(--text-dim);font-size:16px;display:grid;place-items:center;flex:none;transition:.15s}
+  .close-x:hover{color:var(--text);background:var(--line)}
+  .modal-body{padding:14px 20px 20px}
+  .shift-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .shift-row{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--line-soft);border-radius:10px;padding:9px 11px}
+  .shift-row .time{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .shift-row .dur{font-size:11px;color:var(--amber);font-weight:600;flex:1;font-variant-numeric:tabular-nums}
+  .del{width:28px;height:28px;border-radius:8px;color:var(--text-faint);font-size:14px;display:grid;place-items:center;flex:none;transition:.15s}
+  .del:hover{color:#ff6b6f;background:rgba(229,72,77,.12)}
+  .empty{font-size:13px;color:var(--text-faint);text-align:center;padding:10px 0 14px}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .field label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:5px;font-weight:500}
+  input[type=time]{width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:14px;font-variant-numeric:tabular-nums}
+  input[type=time]:focus{outline:none;border-color:var(--amber-line)}
+  ::-webkit-calendar-picker-indicator{filter:invert(.7)}
+  .add-btn{width:100%;height:42px;border-radius:10px;background:var(--amber);color:#1a1304;font-weight:600;font-size:14px;transition:.15s}
+  .add-btn:hover{background:#ffb43a}
+
+  @media(max-width:520px){
+    .cell{min-height:70px;padding:4px 3px 5px}
+    .chip{font-size:9px}
+    .daynum{width:19px;height:19px;font-size:11.5px}
+    .weekdays div{font-size:9px;padding:7px 2px}
+    .fields{grid-template-columns:1fr}
+    .stat{padding:9px 12px}.stat .value{font-size:17px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="munkanaptar.html" class="back-link">← Vissza a naptárhoz</a>
+  <span class="eyebrow">Egyszerű naptár</span>
+  <h1>Havi beosztás &amp; bér</h1>
+
+  <div class="totals">
+    <div class="stat"><div class="label">Napok</div><div class="value" id="stat-days">0</div></div>
+    <div class="stat"><div class="label">Óra</div><div class="value accent" id="stat-hours">0<small>ó</small></div></div>
+    <div class="stat"><div class="label">Kereset</div><div class="value" id="stat-earn">0<small> Ft</small></div></div>
+  </div>
+
+  <div class="wage-box">
+    <label for="wage-input">Órabér</label>
+    <input type="number" id="wage-input" min="0" step="50" placeholder="0">
+    <span>Ft / óra</span>
+  </div>
+
+  <div class="navbar">
+    <div class="month-label" id="month-label">—</div>
+    <div class="navbtns">
+      <button class="today-btn" id="today-btn">Ma</button>
+      <button class="icon-btn" id="prev" aria-label="Előző hónap">‹</button>
+      <button class="icon-btn" id="next" aria-label="Következő hónap">›</button>
+    </div>
+  </div>
+
+  <div class="cal">
+    <div class="weekdays" id="weekdays"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="m-date"></h2>
+      <button class="close-x" id="m-close" aria-label="Bezárás">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="shift-list" id="m-list"></div>
+      <div class="fields">
+        <div class="field"><label for="f-start">Kezdés</label><input type="time" id="f-start" value="08:00"></div>
+        <div class="field"><label for="f-end">Befejezés</label><input type="time" id="f-end" value="16:00"></div>
+      </div>
+      <button class="add-btn" id="f-add">Hozzáadás</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const HU_MONTHS=['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+const HU_DOW_SHORT=['H','K','Sze','Cs','P','Szo','V'];
+const STORAGE_KEY='mn_simple_calendar_v1';
+
+let shifts={};   // { 'YYYY-MM-DD': [{s,e}] }
+let wage=0;
+let view=new Date(); view.setDate(1);
+let openDateKey=null;
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){ const d=JSON.parse(raw); shifts=d.shifts||{}; wage=d.wage||0; }
+  }catch(e){ /* nincs még mentés vagy nem elérhető a localStorage */ }
+}
+function saveData(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({shifts,wage})); }catch(e){ /* nem tudott menteni */ }
+}
+
+const pad=n=>String(n).padStart(2,'0');
+const keyOf=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+function minutes(s,e){
+  const [sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+  let mins=(eh*60+em)-(sh*60+sm);
+  if(mins<=0) mins+=1440;
+  return mins;
+}
+function fmtDur(mins){ const h=Math.floor(mins/60), m=mins%60; return m? `${h}ó ${m}p` : `${h}ó`; }
+function fmtHoursDecimal(mins){ const h=mins/60; return Number.isInteger(h)? String(h) : h.toFixed(1).replace('.',','); }
+function shiftsFor(key){ return shifts[key]||[]; }
+
+function renderWeekdays(){
+  const wd=document.getElementById('weekdays'); wd.innerHTML='';
+  HU_DOW_SHORT.forEach((d,i)=>{ const el=document.createElement('div'); el.textContent=d; if(i>=5) el.className='we'; wd.appendChild(el); });
+}
+function render(){
+  const y=view.getFullYear(), m=view.getMonth();
+  document.getElementById('month-label').innerHTML=`${HU_MONTHS[m]} <span class="yr">${y}</span>`;
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  const first=new Date(y,m,1);
+  let lead=(first.getDay()+6)%7;
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const prevDays=new Date(y,m,0).getDate();
+  const today=new Date(); const todayKey=keyOf(today.getFullYear(),today.getMonth(),today.getDate());
+
+  const cells=[];
+  for(let i=0;i<lead;i++) cells.push({d:prevDays-lead+1+i,out:true});
+  for(let d=1;d<=daysInMonth;d++) cells.push({d,out:false});
+  while(cells.length%7!==0) cells.push({d:cells.length-lead-daysInMonth+1,out:true});
+
+  cells.forEach((c,i)=>{
+    const col=i%7;
+    const cell=document.createElement('div');
+    cell.className='cell'+(c.out?' out':'')+(col>=5?' we':'');
+    if(!c.out){
+      const key=keyOf(y,m,c.d);
+      if(key===todayKey) cell.classList.add('today');
+      const list=shiftsFor(key);
+      cell.innerHTML=`<div class="daynum">${c.d}</div>`;
+      if(list.length){
+        const box=document.createElement('div'); box.className='shifts';
+        list.slice(0,3).forEach(s=>{
+          const chip=document.createElement('div'); chip.className='chip';
+          chip.textContent=`${s.s}–${s.e}`;
+          box.appendChild(chip);
+        });
+        cell.appendChild(box);
+      }
+      const hint=document.createElement('div'); hint.className='add-hint'; hint.textContent='+';
+      cell.appendChild(hint);
+      cell.addEventListener('click',()=>openDay(key));
+    }
+    grid.appendChild(cell);
+  });
+  renderTotals();
+}
+function renderTotals(){
+  const y=view.getFullYear(), m=view.getMonth();
+  let days=0, mins=0;
+  Object.keys(shifts).forEach(k=>{
+    if(k.startsWith(`${y}-${pad(m+1)}-`)){
+      const l=shifts[k];
+      if(l.length){ days++; l.forEach(s=>mins+=minutes(s.s,s.e)); }
+    }
+  });
+  document.getElementById('stat-days').textContent=days;
+  document.getElementById('stat-hours').innerHTML=`${fmtHoursDecimal(mins)}<small>ó</small>`;
+  const earn=Math.round((mins/60)*wage);
+  document.getElementById('stat-earn').innerHTML=`${earn.toLocaleString('hu-HU')}<small> Ft</small>`;
+}
+
+function openDay(key){
+  openDateKey=key;
+  const [y,m,d]=key.split('-').map(Number);
+  document.getElementById('m-date').textContent=`${y}. ${HU_MONTHS[m-1].toLowerCase()} ${d}.`;
+  renderModalList();
+  document.getElementById('scrim').classList.add('open');
+}
+function closeModal(){ document.getElementById('scrim').classList.remove('open'); openDateKey=null; }
+function renderModalList(){
+  const list=shiftsFor(openDateKey);
+  const box=document.getElementById('m-list');
+  if(!list.length){ box.innerHTML='<div class="empty">Még nincs bejegyzés ezen a napon.</div>'; return; }
+  box.innerHTML='';
+  list.forEach((s,idx)=>{
+    const row=document.createElement('div'); row.className='shift-row';
+    row.innerHTML=`<span class="time">${s.s}–${s.e}</span><span class="dur">${fmtDur(minutes(s.s,s.e))}</span><button class="del" title="Törlés">🗑</button>`;
+    row.querySelector('.del').addEventListener('click',()=>deleteShift(idx));
+    box.appendChild(row);
+  });
+}
+function addShift(){
+  const s=document.getElementById('f-start').value;
+  const e=document.getElementById('f-end').value;
+  if(!s||!e) return;
+  if(!shifts[openDateKey]) shifts[openDateKey]=[];
+  shifts[openDateKey].push({s,e});
+  shifts[openDateKey].sort((a,b)=>a.s.localeCompare(b.s));
+  saveData(); renderModalList(); render();
+}
+function deleteShift(idx){
+  shifts[openDateKey].splice(idx,1);
+  if(!shifts[openDateKey].length) delete shifts[openDateKey];
+  saveData(); renderModalList(); render();
+}
+
+document.getElementById('prev').onclick=()=>{ view.setMonth(view.getMonth()-1); render(); };
+document.getElementById('next').onclick=()=>{ view.setMonth(view.getMonth()+1); render(); };
+document.getElementById('today-btn').onclick=()=>{ view=new Date(); view.setDate(1); render(); };
+document.getElementById('m-close').onclick=closeModal;
+document.getElementById('scrim').addEventListener('click',e=>{ if(e.target.id==='scrim') closeModal(); });
+document.getElementById('f-add').onclick=addShift;
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+['f-start','f-end'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') addShift(); }));
+document.getElementById('wage-input').addEventListener('input',()=>{
+  const v=parseFloat(document.getElementById('wage-input').value);
+  wage=(isNaN(v)?0:v);
+  saveData(); renderTotals();
+});
+
+loadData();
+document.getElementById('wage-input').value=wage||'';
+renderWeekdays();
+render();
+</script>
+</body>
+</html>
