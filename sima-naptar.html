@@ -60,7 +60,7 @@
   .selcount b{font-family:'Space Grotesk',sans-serif;color:var(--text);font-size:15px;font-variant-numeric:tabular-nums}
   .sellbl{font-size:11.5px;color:var(--text-faint)}
   .selbar input[type=time]{width:auto;padding:6px 9px;font-size:13px}
-  .selbtn{height:34px;padding:0 13px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--text);font-size:12.5px;font-weight:500;transition:.15s;white-space:nowrap;flex:0 0 auto}
+  .selbtn{height:34px;padding:0 13px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--text);font-size:12.5px;font-weight:500;transition:.15s;white-space:nowrap;flex:0 0 auto;min-width:max-content;width:auto}
   .selbtn:hover{background:var(--surface-2);border-color:var(--line-soft)}
   .selbtn.del{color:#ff6b6f;border-color:rgba(229,72,77,.3)}
   .selbtn.del:hover{background:rgba(229,72,77,.12)}
@@ -129,7 +129,7 @@
 </head>
 <body>
 <div class="wrap">
-  <a href="munkanaptar.html" class="back-link">← Vissza a naptárhoz</a>
+  <a href="index.html" class="back-link">← Vissza a naptárhoz</a>
   <span class="eyebrow">Egyszerű naptár</span>
   <h1>Havi beosztás &amp; bér</h1>
 
@@ -156,6 +156,7 @@
   </div>
 
   <div class="selbar" id="selbar">
+    <button class="selbtn" id="sel-close">Kész</button>
     <span class="selcount"><b id="sel-count">0</b> nap kijelölve</span>
     <span class="sellbl">Kezdés</span>
     <input type="time" id="sel-start" value="08:00">
@@ -163,7 +164,6 @@
     <input type="time" id="sel-end" value="16:00">
     <button class="selbtn done" id="sel-apply">Hozzáadás mindenhez</button>
     <button class="selbtn del" id="sel-del">Törlés</button>
-    <button class="selbtn" id="sel-close">Kész</button>
   </div>
 
   <div class="cal">
